@@ -1021,7 +1021,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 265275915}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1288578791}
+        m_TargetAssemblyTypeName: Button, Assembly-CSharp
+        m_MethodName: GameStartButton
+        m_Mode: 3
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 1
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &265275915
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1639,8 +1651,8 @@ GameObject:
   m_Component:
   - component: {fileID: 521232346}
   - component: {fileID: 521232345}
-  - component: {fileID: 521232344}
-  - component: {fileID: 521232343}
+  - component: {fileID: 521232348}
+  - component: {fileID: 521232347}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1648,30 +1660,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &521232343
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 521232342}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a96d1db292460cd4fb8e16ac01b915f5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &521232344
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 521232342}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9795832ffa9e1374eac4ea19a7073d9b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &521232345
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1699,6 +1687,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &521232347
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 521232342}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7746430bde9952d4bbc6f69294ab14bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cubePrefab: {fileID: 4601361173166561120, guid: 8db4ced1df746ba4784484b2501e9f05, type: 3}
+  isOTurn: 1
+  gameOver: 0
+--- !u!114 &521232348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 521232342}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcac8efe2419cbf4fbcffa147f3b0065, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cubePrefab: {fileID: 4601361173166561120, guid: 8db4ced1df746ba4784484b2501e9f05, type: 3}
+  isOTurn: 1
+  gameOver: 0
+  isMoving: 0
 --- !u!1 &551913989
 GameObject:
   m_ObjectHideFlags: 0
@@ -2913,7 +2932,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1311103607}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1288578791}
+        m_TargetAssemblyTypeName: Button, Assembly-CSharp
+        m_MethodName: GameStartButton
+        m_Mode: 3
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1311103607
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3115,7 +3146,7 @@ RectTransform:
   m_GameObject: {fileID: 1425095949}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 1, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1500107876}
@@ -3510,7 +3541,7 @@ RectTransform:
   m_GameObject: {fileID: 1850088076}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 1, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1652490468}

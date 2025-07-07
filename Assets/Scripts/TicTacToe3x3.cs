@@ -10,7 +10,8 @@ public class TicTacToe3x3 : MonoBehaviour
     public bool isOTurn = true;
     public bool gameOver = false; // 게임 종료 상태
     private bool isExpanded = false; // 큐브가 펼쳐진 상태인지 여부
-    private bool isMoving = false; // 코루틴 실행 여부 확인
+    public bool IsExpanded => isExpanded;
+    public bool isMoving = false; // 코루틴 실행 여부 확인
 
     void Start()
     {
@@ -33,9 +34,9 @@ public class TicTacToe3x3 : MonoBehaviour
         }
     }
 
-    void Update()
+    public void MoveCube()
     {
-        if (Input.GetKeyDown(KeyCode.Q) && !isMoving)
+        if(!isMoving)
         {
             isExpanded = !isExpanded; // 상태 전환
             StartCoroutine(MoveCubes());
@@ -47,6 +48,30 @@ public class TicTacToe3x3 : MonoBehaviour
         isMoving = true; // 코루틴 실행 중 상태 설정
         float elapsedTime = 0f;
         float duration = 1f; // 이동 시간
+
+        // 중앙 값 계산 (모든 큐브의 원래 위치의 평균)
+        Vector3 centerPosition = Vector3.zero;
+        int cubeCount = 0;
+
+        for (int x = 0; x < 3; x++)
+        {
+            for (int y = 0; y < 3; y++)
+            {
+                for (int z = 0; z < 3; z++)
+                {
+                    if (cubes[x, y, z] != null)
+                    {
+                        centerPosition += originalPositions[x, y, z];
+                        cubeCount++;
+                    }
+                }
+            }
+        }
+
+        if (cubeCount > 0)
+        {
+            centerPosition /= cubeCount; // 평균 위치 계산
+        }
 
         while (elapsedTime < duration)
         {
@@ -65,19 +90,13 @@ public class TicTacToe3x3 : MonoBehaviour
                             Vector3 targetPosition = originalPositions[x, y, z];
                             if (isExpanded)
                             {
-                                float zPosition = originalPositions[x, y, z].z;
-                                if (Mathf.Approximately(zPosition, 0f))
-                                {
-                                    targetPosition += new Vector3(-3.5f, 0, 0);
-                                }
-                                else if (Mathf.Approximately(zPosition, 2.2f))
-                                {
-                                    targetPosition += new Vector3(3.5f, 0, 0);
-                                }
+                                // 중앙 값 기준으로 상대적인 위치를 유지하며 거리 증가
+                                Vector3 relativePosition = originalPositions[x, y, z] - centerPosition;
+                                targetPosition = centerPosition + relativePosition * 2.5f; // 거리 비율을 3배로 증가
                             }
 
                             // Lerp를 사용하여 부드럽게 이동
-                            cube.transform.position = Vector3.Lerp(cube.transform.position, targetPosition, t*0.1f);
+                            cube.transform.position = Vector3.Lerp(cube.transform.position, targetPosition, t * 0.1f);
                         }
                     }
                 }
