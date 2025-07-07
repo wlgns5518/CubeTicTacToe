@@ -1,12 +1,16 @@
+using System.Collections;
 using UnityEngine;
 
 public class TicTacToe3x3 : MonoBehaviour
 {
     public GameObject cubePrefab; // 에디터에서 할당
     public GameObject[,,] cubes = new GameObject[3, 3, 3];
+    public Vector3[,,] originalPositions = new Vector3[3, 3, 3]; // 큐브의 원래 위치 저장
     public int[,,] board = new int[3, 3, 3]; // 0: 비어있음, 1: O, 2: X
     public bool isOTurn = true;
     public bool gameOver = false; // 게임 종료 상태
+    private bool isExpanded = false; // 큐브가 펼쳐진 상태인지 여부
+    private bool isMoving = false; // 코루틴 실행 여부 확인
 
     void Start()
     {
@@ -20,12 +24,69 @@ public class TicTacToe3x3 : MonoBehaviour
                     Vector3 pos = new Vector3(x * spacing, y * spacing, z * spacing);
                     GameObject cube = Instantiate(cubePrefab, pos, Quaternion.identity, transform);
                     cubes[x, y, z] = cube;
+                    originalPositions[x, y, z] = pos; // 원래 위치 저장
                     int cx = x, cy = y, cz = z;
                     cube.AddComponent<BoxCollider>();
                     cube.AddComponent<CubeClickHandler>().Init(this, cx, cy, cz);
                 }
             }
         }
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Q) && !isMoving)
+        {
+            isExpanded = !isExpanded; // 상태 전환
+            StartCoroutine(MoveCubes());
+        }
+    }
+
+    private IEnumerator MoveCubes()
+    {
+        isMoving = true; // 코루틴 실행 중 상태 설정
+        float elapsedTime = 0f;
+        float duration = 1f; // 이동 시간
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / duration;
+
+            for (int x = 0; x < 3; x++)
+            {
+                for (int y = 0; y < 3; y++)
+                {
+                    for (int z = 0; z < 3; z++)
+                    {
+                        GameObject cube = cubes[x, y, z];
+                        if (cube != null)
+                        {
+                            Vector3 targetPosition = originalPositions[x, y, z];
+                            if (isExpanded)
+                            {
+                                float zPosition = originalPositions[x, y, z].z;
+                                if (Mathf.Approximately(zPosition, 0f))
+                                {
+                                    targetPosition += new Vector3(-3.5f, 0, 0);
+                                }
+                                else if (Mathf.Approximately(zPosition, 2.2f))
+                                {
+                                    targetPosition += new Vector3(3.5f, 0, 0);
+                                }
+                            }
+
+                            // Lerp를 사용하여 부드럽게 이동
+                            cube.transform.position = Vector3.Lerp(cube.transform.position, targetPosition, t*0.1f);
+                        }
+                    }
+                }
+            }
+
+            yield return null; // 다음 프레임까지 대기
+        }
+
+        isMoving = false; // 코루틴 실행 완료 상태 설정
     }
 
     public void OnCubeClicked(int x, int y, int z, GameObject cube)
@@ -96,24 +157,5 @@ public class TicTacToe3x3 : MonoBehaviour
         if (board[0, 2, 2] == player && board[1, 1, 1] == player && board[2, 0, 0] == player) lines++;
 
         return lines;
-    }
-}
-
-public class CubeClickHandler : MonoBehaviour
-{
-    private TicTacToe3x3 manager;
-    private int x, y, z;
-
-    public void Init(TicTacToe3x3 manager, int x, int y, int z)
-    {
-        this.manager = manager;
-        this.x = x;
-        this.y = y;
-        this.z = z;
-    }
-
-    void OnMouseDown()
-    {
-        manager.OnCubeClicked(x, y, z, gameObject);
     }
 }
