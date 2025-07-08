@@ -274,7 +274,6 @@ GameObject:
   - component: {fileID: 8194081370234301729}
   - component: {fileID: 4612527692582534717}
   - component: {fileID: 4700444141371291433}
-  - component: {fileID: 3656509427341278927}
   m_Layer: 0
   m_Name: Inflatable_Ring_A_Donuts
   m_TagString: Untagged
@@ -350,28 +349,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &3656509427341278927
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4214801438943336650}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -2705870685766528134, guid: cc4130b4cdf02ad42a94d44c851c46bf, type: 3}
 --- !u!1 &4601361173166561120
 GameObject:
   m_ObjectHideFlags: 0

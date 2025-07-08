@@ -15,13 +15,9 @@ public class CubeClickHandler : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (manager is TicTacToe4x4 ticTacToeManager)
+        if (manager is TicTacToeNxN ticTacToeManager)
         {
             ticTacToeManager.OnCubeClicked(x, y, z, gameObject);
-        }
-        else if (manager is TicTacToe3x3 ticTacToeManager3x3)
-        {
-            ticTacToeManager3x3.OnCubeClicked(x, y, z, gameObject);
         }
         else
         {
