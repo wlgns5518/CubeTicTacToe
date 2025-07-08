@@ -19,7 +19,7 @@ public class TicTacToeNxN : MonoBehaviour
     public bool isAI = false;
     private Coroutine turnTimerCoroutine; // 턴 타이머를 관리하는 코루틴
     [SerializeField] private TextMeshProUGUI timerText; // 에디터에서 할당
-    public GameButton gameButton;
+    public GameOverUI gameButton;
     private void Awake()
     {
         N = GameManager.Instance.CurrentVersion;

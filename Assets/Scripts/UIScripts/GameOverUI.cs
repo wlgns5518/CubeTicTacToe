@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GameButton : MonoBehaviour
+public class GameOverUI : MonoBehaviour
 {
     public GameObject resultPopup;
     public Button resultButton;
