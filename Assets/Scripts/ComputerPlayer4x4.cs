@@ -7,15 +7,21 @@ public class ComputerPlayer4x4 : MonoBehaviour
     private void Start()
     {
         tictactoe4x4 = GameManager.Instance.tictactoe4x4;
-    }
-
-    void Update()
-    {
-        // AI가 활성화되어 있고, 게임이 진행 중이며 AI의 턴일 때 움직임 수행
-        if (tictactoe4x4 != null && !tictactoe4x4.gameOver && !tictactoe4x4.isOTurn)
+        if (tictactoe4x4 != null)
         {
-            MakeMove();
+            tictactoe4x4.OnAITurnStarted += HandleAITurnStarted; // 이벤트 구독
         }
+    }
+    private void OnDestroy()
+    {
+        if (tictactoe4x4 != null)
+        {
+            tictactoe4x4.OnAITurnStarted -= HandleAITurnStarted; // 이벤트 구독 해제
+        }
+    }
+    private void HandleAITurnStarted()
+    {
+        MakeMove();
     }
 
     public void MakeMove()

@@ -3,17 +3,28 @@ using UnityEngine;
 public class ComputerPlayer3x3 : MonoBehaviour
 {
     private TicTacToe3x3 tictactoe3x3;
+
     private void Start()
     {
         tictactoe3x3 = GameManager.Instance.tictactoe3x3;
-    }
-    void Update()
-    {
-        // AI가 활성화되어 있고, 게임이 진행 중이며 AI의 턴일 때 움직임 수행
-        if (tictactoe3x3 != null && !tictactoe3x3.gameOver && !tictactoe3x3.isOTurn)
+
+        if (tictactoe3x3 != null)
         {
-            MakeMove();
+            tictactoe3x3.OnAITurnStarted += HandleAITurnStarted; // 이벤트 구독
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (tictactoe3x3 != null)
+        {
+            tictactoe3x3.OnAITurnStarted -= HandleAITurnStarted; // 이벤트 구독 해제
+        }
+    }
+
+    private void HandleAITurnStarted()
+    {
+        MakeMove();
     }
 
     public void MakeMove()
@@ -22,7 +33,6 @@ public class ComputerPlayer3x3 : MonoBehaviour
         int opponent = 1; // 상대방 (O)
         int self = 2; // AI (X)
 
-        // 1. 상대방의 승리를 막기 위한 위치 찾기
         Vector3? blockMove = FindCriticalMove(board, opponent);
         if (blockMove.HasValue)
         {
@@ -30,7 +40,6 @@ public class ComputerPlayer3x3 : MonoBehaviour
             return;
         }
 
-        // 2. 자신의 승리를 위한 위치 찾기
         Vector3? winMove = FindCriticalMove(board, self);
         if (winMove.HasValue)
         {
@@ -38,7 +47,6 @@ public class ComputerPlayer3x3 : MonoBehaviour
             return;
         }
 
-        // 3. 임의의 빈 칸 선택
         for (int x = 0; x < 3; x++)
         {
             for (int y = 0; y < 3; y++)

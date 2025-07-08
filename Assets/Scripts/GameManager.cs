@@ -6,6 +6,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
     public TicTacToe3x3 tictactoe3x3 { get; private set; }
     public TicTacToe4x4 tictactoe4x4 { get; private set; }
+    private int currentMode; // 현재 게임 모드 저장
 
     void Awake()
     {
@@ -22,8 +23,11 @@ public class GameManager : MonoBehaviour
         tictactoe3x3.enabled = false;
         tictactoe4x4.enabled = false;
     }
+
     public void GameStart(int version, int mode)
     {
+        currentMode = mode; // 현재 모드 저장
+
         if (version == 0)
         {
             // 3x3 게임을 위한 씬 번호 1 실행
@@ -35,7 +39,7 @@ public class GameManager : MonoBehaviour
                 ComputerPlayer3x3 computerPlayer = FindAnyObjectByType<ComputerPlayer3x3>();
                 if (computerPlayer != null)
                 {
-                    computerPlayer.enabled = true; // ComputerPlayer4x4 활성화
+                    computerPlayer.enabled = true; // ComputerPlayer3x3 활성화
                 }
             }
         }
@@ -54,5 +58,10 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    public bool IsAIMode()
+    {
+        return currentMode == 0; // 현재 모드가 AI 대결인지 확인
     }
 }

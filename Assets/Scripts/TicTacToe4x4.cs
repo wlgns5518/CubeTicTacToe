@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -12,6 +13,8 @@ public class TicTacToe4x4 : MonoBehaviour
     private bool isExpanded = false; // 큐브가 펼쳐진 상태인지 여부
     public bool IsExpanded => isExpanded;
     private bool isMoving = false; // 코루틴 실행 여부 확인
+    public event Action OnAITurnStarted; // AI 턴 시작 이벤트
+    private bool isAI = false;
 
     void Start()
     {
@@ -31,6 +34,10 @@ public class TicTacToe4x4 : MonoBehaviour
                     cube.AddComponent<CubeClickHandler>().Init(this, cx, cy, cz);
                 }
             }
+        }
+        if (GameManager.Instance.IsAIMode())
+        {
+            isAI = true;
         }
     }
     public void MoveCube()
@@ -113,24 +120,31 @@ public class TicTacToe4x4 : MonoBehaviour
         if (board[x, y, z] != 0) return; // 이미 선택된 칸은 무시
 
         board[x, y, z] = isOTurn ? 1 : 2;
-        MeshRenderer cubeMesh = cube.GetComponent<MeshRenderer>();
-        cubeMesh.enabled = false;
-        // 자식 오브젝트에서 "O"와 "X"를 찾아 활성화
-        Transform oObj = cube.transform.Find("O");
-        Transform xObj = cube.transform.Find("X");
-        if (oObj != null) oObj.gameObject.SetActive(isOTurn);
-        if (xObj != null) xObj.gameObject.SetActive(!isOTurn);
-
-        int player = isOTurn ? 1 : 2;
-        int completedLines = CheckCompletedLines(player);
-        if (completedLines >= 1)
+        Cube cubeObj = cube.GetComponent<Cube>();
+        cubeObj.cubeMesh.enabled = false;
+        //"O"와 "X"를 찾아 활성화
+        if (isOTurn)
         {
-            gameOver = true;
-            Debug.Log((player == 1 ? "O" : "X") + "가 승리하였습니다!");
+            Transform oObj = cubeObj.oObj;
+            oObj.gameObject.SetActive(isOTurn);
         }
         else
         {
+            Transform xObj = cubeObj.xObj;
+            xObj.gameObject.SetActive(!isOTurn);
+        }
+
+        int player = isOTurn ? 1 : 2;
+        int completedLines = CheckCompletedLines(player);
+        if (completedLines == 1)
+            gameOver = true;
+        else
+        {
             isOTurn = !isOTurn;
+            if (isAI && !isOTurn)
+            {
+                OnAITurnStarted?.Invoke();
+            }
         }
     }
 
