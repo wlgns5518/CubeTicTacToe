@@ -23,7 +23,6 @@ public class TicTacToeNxN : MonoBehaviour
     private void Awake()
     {
         N = GameManager.Instance.CurrentVersion;
-        Debug.Log(N);
         cubes = new GameObject[N, N, N];
         originalPositions = new Vector3[N, N, N]; // 큐브의 원래 위치 저장
     }

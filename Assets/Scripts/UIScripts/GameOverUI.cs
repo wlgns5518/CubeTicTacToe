@@ -10,6 +10,7 @@ public class GameOverUI : MonoBehaviour
 
     public void OKButton()
     {
+        SoundManager.Instance.PlayUIClickSound();
         GameManager.Instance.GameSet();
     }
 
@@ -17,6 +18,7 @@ public class GameOverUI : MonoBehaviour
     {
         if (resultPopup != null)
         {
+            SoundManager.Instance.PlayUIClickSound();
             resultPopup.SetActive(false);
         }
     }
@@ -25,6 +27,7 @@ public class GameOverUI : MonoBehaviour
     {
         if (resultPopup != null)
         {
+            SoundManager.Instance.PlayUIClickSound();
             resultPopup.SetActive(true);
         }
     }
