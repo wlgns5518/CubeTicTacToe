@@ -179,7 +179,7 @@ public class TicTacToeNxN : MonoBehaviour
     {
         if (gameOver) return; // 게임이 끝났으면 무시
         if (board[x, y, z] != 0) return; // 이미 선택된 칸은 무시
-
+        SoundManager.Instance.PlayCubeClickSound();
         board[x, y, z] = isOTurn ? 1 : 2;
         Cube cubeObj = cube.GetComponent<Cube>();
         cubeObj.cubeMesh.enabled = false;

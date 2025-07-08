@@ -1253,6 +1253,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bgmClip: {fileID: 8300000, guid: 39124608d58311c4b8f165b89b25ffc4, type: 3}
   uiClickClip: {fileID: 8300000, guid: 27d4a653c62944f4d8b741c8b737e3e2, type: 3}
+  cubeClickClip: {fileID: 8300000, guid: 341fb6f549a07ab42ba55c8d21ed8044, type: 3}
 --- !u!4 &298823770
 Transform:
   m_ObjectHideFlags: 0

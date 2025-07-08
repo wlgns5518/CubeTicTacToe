@@ -7,6 +7,7 @@ public class SoundManager : MonoBehaviour
     [Header("Audio Clips")]
     public AudioClip bgmClip;
     public AudioClip uiClickClip;
+    public AudioClip cubeClickClip;
 
     private const string BGM_VOLUME_KEY = "BGM_VOLUME";
     private const string EFFECT_VOLUME_KEY = "EFFECT_VOLUME";
@@ -56,9 +57,12 @@ public class SoundManager : MonoBehaviour
     public void PlayUIClickSound()
     {
         if (uiClickClip != null)
-        {
             effectSource.PlayOneShot(uiClickClip);
-        }
+    }
+    public void PlayCubeClickSound()
+    {
+        if (cubeClickClip != null)
+            effectSource.PlayOneShot(cubeClickClip);
     }
 
     // 볼륨 설정 메서드
