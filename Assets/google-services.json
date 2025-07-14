@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "547845580475",
+    "project_id": "cubetictactoe",
+    "storage_bucket": "cubetictactoe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:547845580475:android:94257f8a5020fb8aeb6b9e",
+        "android_client_info": {
+          "package_name": "com.artriel.cubetictactoe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBUbIlID37_2v9xLxwMyRHn6Jw8XL23RVM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
