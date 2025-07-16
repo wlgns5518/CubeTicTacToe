@@ -28,18 +28,18 @@ public class GameManager : MonoBehaviour
         isOTurnFirst = Random.value > 0.5f;
         if (version == 0)
         {
-            // 3x3 게임을 위한 씬 번호 1 실행
-            SceneManager.LoadScene(1);
+            // 3x3 게임을 위한 씬 번호 2 실행
+            SceneManager.LoadScene(2);
         }
         else if (version == 1)
         {
-            // 4x4 게임을 위한 씬 번호 2 실행
-            SceneManager.LoadScene(2);
+            // 4x4 게임을 위한 씬 번호 3 실행
+            SceneManager.LoadScene(3);
         }
     }
     public void GameSet()
     {
-        SceneManager.LoadScene(0);
+        SceneManager.LoadScene(1);
     }
 
     public bool IsAIMode()
