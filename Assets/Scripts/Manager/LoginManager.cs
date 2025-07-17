@@ -4,14 +4,14 @@ using Firebase.Extensions;
 using Google;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
-public class FirebaseManager : MonoBehaviour
+public class LoginManager : MonoBehaviour
 {
+    public static LoginManager Instance { get; private set; } // 싱글톤 인스턴스
+
     public TextMeshProUGUI infoText;
     public string webClientId = "547845580475-6re3mh59m484pu68thvgpc896v6gtogi.apps.googleusercontent.com";
 
@@ -20,6 +20,18 @@ public class FirebaseManager : MonoBehaviour
 
     private void Awake()
     {
+        // 싱글톤 인스턴스 설정
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); // 씬 전환 시에도 유지
+        }
+        else
+        {
+            Destroy(gameObject); // 중복 인스턴스 제거
+            return;
+        }
+
         configuration = new GoogleSignInConfiguration { WebClientId = webClientId, RequestEmail = true, RequestIdToken = true };
         CheckFirebaseDependencies();
     }
@@ -131,16 +143,62 @@ public class FirebaseManager : MonoBehaviour
         GoogleSignIn.DefaultInstance.SignInSilently().ContinueWith(OnAuthenticationFinished);
     }
 
-    public void OnGamesSignIn()
+    public void RegisterWithEmail(string email,string password)
     {
-        GoogleSignIn.Configuration = configuration;
-        GoogleSignIn.Configuration.UseGameSignIn = true;
-        GoogleSignIn.Configuration.RequestIdToken = false;
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+        {
+            AddToInformation("Email or Password is empty.");
+            return;
+        }
 
-        AddToInformation("Calling Games SignIn");
-
-        GoogleSignIn.DefaultInstance.SignIn().ContinueWith(OnAuthenticationFinished);
+        auth.CreateUserWithEmailAndPasswordAsync(email, password).ContinueWithOnMainThread(task =>
+        {
+            if (task.IsFaulted || task.IsCanceled)
+            {
+                AddToInformation("Registration failed: " + task.Exception?.Message);
+            }
+            else
+            {
+                AddToInformation($"Registration successful. User: {email}");
+            }
+        });
     }
 
+    public void SignInWithEmail(string email, string password)
+    {
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+        {
+            AddToInformation("Email or Password is empty.");
+            return;
+        }
+
+        auth.SignInWithEmailAndPasswordAsync(email, password).ContinueWithOnMainThread(task =>
+        {
+            if (task.IsFaulted || task.IsCanceled)
+            {
+                AddToInformation("Sign-In failed: " + task.Exception?.Message);
+            }
+            else
+            {
+                AddToInformation($"Sign-In successful. User: {email}");
+                GameManager.Instance.GameSet();
+            }
+        });
+    }
+    public void SignInAnonymously()
+    {
+        auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
+        {
+            if (task.IsFaulted || task.IsCanceled)
+            {
+                AddToInformation("Anonymous Sign-In failed: " + task.Exception?.Message);
+            }
+            else
+            {
+                AddToInformation("Anonymous Sign-In Successful.");
+                GameManager.Instance.GameSet();
+            }
+        });
+    }
     private void AddToInformation(string str) { infoText.text += "\n" + str; }
 }

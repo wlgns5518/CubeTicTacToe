@@ -31,6 +31,7 @@ public class MainPageButton : MonoBehaviour
     public void ExitButton()
     {
         SoundManager.Instance.PlayUIClickSound();
+        LoginManager.Instance.OnDisconnect();
         Application.Quit();
     }
     public void SetUpButton()
@@ -42,5 +43,12 @@ public class MainPageButton : MonoBehaviour
     {
         SoundManager.Instance.PlayUIClickSound();
         setUpPanel.SetActive(false);
+    }
+    public void LogoutButton()
+    {
+        SoundManager.Instance.PlayUIClickSound();
+        LoginManager.Instance.SignOutFromGoogle();
+        LoginManager.Instance.OnDisconnect();
+        Application.Quit();
     }
 }

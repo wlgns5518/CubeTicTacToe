@@ -41,7 +41,10 @@ public class SoundManager : MonoBehaviour
 
         SetBGMVolume(bgmVolume);
         SetEffectVolume(effectVolume);
+    }
 
+    public void PlayBGMSound()
+    {
         // 배경음악이 할당되어 있으면 반복 재생
         if (bgmClip != null)
         {
