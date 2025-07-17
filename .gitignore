@@ -75,6 +75,5 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
 # Firebase
-/[Aa]ssets/Plugins/Firebase/
-/[Aa]ssets/StreamingAssets/google-services.json
-/[Aa]ssets/StreamingAssets/GoogleService-Info.plist
+/[Aa]ssets/Firebase/
+/[Aa]ssets/StreamingAssets/google-services-desktop.json
