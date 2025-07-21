@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class ComputerPlayerNxN : MonoBehaviour
 {
-    [SerializeField] private TicTacToeNxN tictactoe;
+    private TicTacToeNxN tictactoe;
     private int n;
     private void Awake()
     {
@@ -14,6 +14,7 @@ public class ComputerPlayerNxN : MonoBehaviour
     }
     private void Start()
     {
+        tictactoe = GameManager.Instance.tictactoe;
         if (tictactoe != null)
         {
             tictactoe.OnAITurnStarted += HandleAITurnStarted; // 이벤트 구독

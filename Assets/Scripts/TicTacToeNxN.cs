@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using TMPro;
 using UnityEngine;
 
 public class TicTacToeNxN : MonoBehaviour
@@ -9,30 +8,26 @@ public class TicTacToeNxN : MonoBehaviour
     [SerializeField] private GameObject cubePrefab; // 에디터에서 할당
     public GameObject[,,] cubes;
     public Vector3[,,] originalPositions;
-    public int[,,] board = new int[3, 3, 3]; // 0: 비어있음, 1: O, 2: X
-    private bool isOTurn;
-    private bool gameOver = false; // 게임 종료 상태
-    private bool isExpanded = false; // 큐브가 펼쳐진 상태인지 여부
-    public bool IsExpanded => isExpanded;
+    public int[,,] board; // 0: 비어있음, 1: O, 2: X
+    public bool isOTurn;
+    public bool gameOver = false; // 게임 종료 상태
+    public bool isExpanded = false; // 큐브가 펼쳐진 상태인지 여부
     private bool isMoving = false; // 코루틴 실행 여부 확인
     public event Action OnAITurnStarted; // AI 턴 시작 이벤트
     public bool isAI = false;
-    private Coroutine turnTimerCoroutine; // 턴 타이머를 관리하는 코루틴
-    [SerializeField] private TextMeshProUGUI timerText; // 에디터에서 할당
-    public GameOverUI gameButton;
+    [SerializeField] private GameUI gameUI;
 
     // 중앙 값 계산 (모든 큐브의 원래 위치의 평균)
-    Vector3 centerPosition = Vector3.zero;
+    public Vector3 centerPosition = Vector3.zero;
     int cubeCount = 0;
     private void Awake()
     {
         N = GameManager.Instance.CurrentVersion;
-        cubes = new GameObject[N, N, N];
-        originalPositions = new Vector3[N, N, N]; // 큐브의 원래 위치 저장
-    }
 
-    void Start()
-    {
+        cubes = new GameObject[N, N, N];
+        board = new int[N, N, N]; // 0: 비어있음, 1: O, 2: X
+        originalPositions = new Vector3[N, N, N]; // 큐브의 원래 위치 저장
+        GameManager.Instance.tictactoe = this;
         float spacing = 1.1f;
         for (int x = 0; x < N; x++)
         {
@@ -44,9 +39,7 @@ public class TicTacToeNxN : MonoBehaviour
                     GameObject cube = Instantiate(cubePrefab, pos, Quaternion.identity, transform);
                     cubes[x, y, z] = cube;
                     originalPositions[x, y, z] = pos; // 원래 위치 저장
-                    int cx = x, cy = y, cz = z;
-                    cube.AddComponent<BoxCollider>();
-                    cube.AddComponent<CubeClickHandler>().Init(this, cx, cy, cz);
+                    cube.AddComponent<CubeClickHandler>().Init(this, x, y, z);
                     centerPosition += originalPositions[x, y, z];
                     cubeCount++;
                 }
@@ -62,7 +55,7 @@ public class TicTacToeNxN : MonoBehaviour
         {
             isAI = true;
         }
-        StartTurnTimer(); // 첫 턴 타이머 시작
+        gameUI.StartTurnTimer();// 첫 턴 타이머 시작
     }
 
     public void MoveCube()
@@ -77,11 +70,12 @@ public class TicTacToeNxN : MonoBehaviour
     private IEnumerator MoveCubes()
     {
         isMoving = true; // 코루틴 실행 중 상태 설정
-        float moveSpeed = 5f; // 이동 속도 (초당 단위 거리)
-
-        while (true)
+        float elapsedTime = 0f;
+        float duration = 2f; // 이동 시간
+        while (elapsedTime < duration)
         {
-            bool allCubesAtTarget = true;
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.SmoothStep(0, 1, elapsedTime / duration); // 부드러운 보간
 
             for (int x = 0; x < N; x++)
             {
@@ -100,79 +94,17 @@ public class TicTacToeNxN : MonoBehaviour
                                 targetPosition = centerPosition + relativePosition * 2.5f; // 거리 비율을 2.5배로 증가
                             }
 
-                            // MoveTowards를 사용하여 목표 위치로 이동
-                            cube.transform.position = Vector3.MoveTowards(
-                                cube.transform.position,
-                                targetPosition,
-                                moveSpeed * Time.deltaTime
-                            );
-
-                            // 목표 위치에 도달했는지 확인
-                            if (cube.transform.position != targetPosition)
-                            {
-                                allCubesAtTarget = false;
-                            }
+                            // Lerp를 사용하여 부드럽게 이동
+                            cube.transform.position = Vector3.Lerp(cube.transform.position, targetPosition, t);
                         }
                     }
                 }
-            }
-
-            // 모든 큐브가 목표 위치에 도달하면 루프 종료
-            if (allCubesAtTarget)
-            {
-                break;
             }
 
             yield return null; // 다음 프레임까지 대기
         }
 
         isMoving = false; // 코루틴 실행 완료 상태 설정
-    }
-
-    private void StartTurnTimer()
-    {
-        if (turnTimerCoroutine != null)
-        {
-            StopCoroutine(turnTimerCoroutine); // 이전 코루틴 중지
-        }
-        turnTimerCoroutine = StartCoroutine(TurnTimer());
-    }
-
-    private IEnumerator TurnTimer()
-    {
-        float turnTimeLimit = 10f; // 턴 제한 시간
-        float elapsedTime = 0f;
-
-        while (elapsedTime < turnTimeLimit)
-        {
-            if (gameOver) // 게임 종료 시 코루틴 중지
-            {
-                yield break;
-            }
-
-            elapsedTime += Time.deltaTime;
-            UpdateTimerText(turnTimeLimit - elapsedTime); // 남은 시간 업데이트
-            yield return null; // 다음 프레임까지 대기
-        }
-
-        // 시간이 초과되면 게임 종료
-        gameOver = true;
-
-        // 팝업창 활성화 및 결과 메시지 설정
-        if (gameButton != null)
-        {
-            gameButton.resultPopup.SetActive(true);
-            gameButton.resultButton.gameObject.SetActive(true);
-            gameButton.SetResultMessage(!isOTurn); // 승리 여부 전달
-        }
-    }
-
-    private void UpdateTimerText(float remainingTime)
-    {
-        if (timerText != null)
-        {
-            timerText.text = $"Time : {Mathf.Ceil(remainingTime)}s";
-        }
     }
 
     public void OnCubeClicked(int x, int y, int z, GameObject cube)
@@ -200,14 +132,7 @@ public class TicTacToeNxN : MonoBehaviour
         if (completedLines == 1)
         {
             gameOver = true;
-
-            // 팝업창 활성화 및 결과 메시지 설정
-            if (gameButton != null)
-            {
-                gameButton.resultPopup.SetActive(true);
-                gameButton.resultButton.gameObject.SetActive(true);
-                gameButton.SetResultMessage(isOTurn); // 승리 여부 전달
-            }
+            gameUI.GameResult();
         }
         else
         {
@@ -216,7 +141,7 @@ public class TicTacToeNxN : MonoBehaviour
             {
                 OnAITurnStarted?.Invoke();
             }
-            StartTurnTimer(); // 다음 턴 타이머 시작
+            gameUI.StartTurnTimer(); // 다음 턴 타이머 시작
         }
     }
 

@@ -1,78 +1,80 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class CameraMove : MonoBehaviour
 {
     public float moveSpeed = 50f;
     public float rotationSpeed = 25f;
-    public float zoomSpeed = 1000f;
-    public float minDistance = 1f;
-    public float maxDistance = 100f;
+    public float zoomSpeed = 200f;
+    public float minDistance = 5f; // 확대의 최대값
+    public float maxDistance = 15f; // 축소의 최대값
 
     private Vector3 lastMousePosition;
     private float distance = 10f;
     private Vector3 target;
+    private float scrollValue = 0;
 
+    // Input Actions
+    public InputAction rotateAction;
+    public InputAction zoomAction;
+
+    public event System.Action<float> OnZoomEvent;
+    private void OnEnable()
+    {
+        // Enable Input Actions
+        rotateAction.Enable();
+        zoomAction.Enable();
+        // Subscribe to zoom event
+        zoomAction.performed += OnZoomPerformed;
+        zoomAction.canceled += OnZoomCanceled;
+    }
     private void Start()
     {
-        target = transform.position + transform.forward * distance;
+        target = GameManager.Instance.tictactoe.centerPosition;
         distance = Vector3.Distance(transform.position, target);
+        this.transform.position = new Vector3(target.x, target.y, -10);        
     }
 
     private void Update()
     {
-        // 마우스 우클릭: 카메라 회전
-        if (Input.GetMouseButtonDown(1))
-            lastMousePosition = Input.mousePosition;
-
-        if (Input.GetMouseButton(1))
+        // 마우스 버튼이 눌렸을 때만 회전 처리
+        if (rotateAction.IsPressed())
         {
-            Vector3 delta = Input.mousePosition - lastMousePosition;
+            Vector2 delta = Mouse.current.delta.ReadValue(); // 마우스 움직임 값 읽기
             float yaw = delta.x * rotationSpeed * Time.deltaTime;
             float pitch = -delta.y * rotationSpeed * Time.deltaTime;
             transform.RotateAround(target, Vector3.up, yaw);
             transform.RotateAround(target, transform.right, pitch);
-            lastMousePosition = Input.mousePosition;
-            // 회전 후 카메라와 타겟 사이 거리 유지
             distance = Vector3.Distance(transform.position, target);
         }
-
-        // Alt+좌클릭: 궤도 회전(Orbit)
-        if (Input.GetKey(KeyCode.LeftAlt) && Input.GetMouseButtonDown(0))
-            lastMousePosition = Input.mousePosition;
-
-        if (Input.GetKey(KeyCode.LeftAlt) && Input.GetMouseButton(0))
+        // Zoom camera
+        if (scrollValue != 0)
         {
-            Vector3 delta = Input.mousePosition - lastMousePosition;
-            float yaw = delta.x * rotationSpeed * Time.deltaTime;
-            float pitch = -delta.y * rotationSpeed * Time.deltaTime;
-            transform.RotateAround(target, Vector3.up, yaw);
-            transform.RotateAround(target, transform.right, pitch);
-            lastMousePosition = Input.mousePosition;
-            distance = Vector3.Distance(transform.position, target);
+            distance = Mathf.Clamp(distance - scrollValue * zoomSpeed * Time.deltaTime, minDistance, maxDistance);
+            transform.position = target - transform.forward * distance;
         }
+    }
 
-        // 휠 클릭: 패닝(Pan)
-        if (Input.GetMouseButtonDown(2))
-            lastMousePosition = Input.mousePosition;
+    private void OnZoomPerformed(InputAction.CallbackContext context)
+    {
+        Vector2 scrollDelta = context.ReadValue<Vector2>();
+        scrollValue = scrollDelta.y; // Use y-axis scroll
+        OnZoomEvent?.Invoke(scrollValue); // Trigger event
+    }
 
-        if (Input.GetMouseButton(2))
-        {
-            Vector3 delta = Input.mousePosition - lastMousePosition;
-            Vector3 right = transform.right * -delta.x * moveSpeed * Time.deltaTime * 0.1f;
-            Vector3 up = transform.up * -delta.y * moveSpeed * Time.deltaTime * 0.1f;
-            transform.position += right + up;
-            target += right + up;
-            lastMousePosition = Input.mousePosition;
-        }
+    private void OnZoomCanceled(InputAction.CallbackContext context)
+    {
+        scrollValue = 0;
+    }
 
-        // 마우스 휠: 줌
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (Mathf.Abs(scroll) > 0.01f)
-        {
-            distance = Mathf.Clamp(distance - scroll * zoomSpeed * Time.deltaTime, minDistance, maxDistance);
-        }
+    private void OnDestroy()
+    {
+        // Unsubscribe from events
+        zoomAction.performed -= OnZoomPerformed;
+        zoomAction.canceled -= OnZoomCanceled;
 
-        // 항상 target을 바라보고, distance만큼 떨어진 위치로 이동
-        transform.position = target - transform.forward * distance;
+        // Disable Input Actions
+        rotateAction.Disable();
+        zoomAction.Disable();
     }
 }

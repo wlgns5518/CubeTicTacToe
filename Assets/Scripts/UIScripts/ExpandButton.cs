@@ -7,14 +7,18 @@ public class ExpandButton : MonoBehaviour
     public Image buttonImage; // 버튼의 이미지 컴포넌트
     public Sprite expandCubeSprite; // ExpandCube 이미지
     public Sprite contractCubeSprite; // ContractCube 이미지
-    [SerializeField] private TicTacToeNxN tictactoeNxN;
+    private TicTacToeNxN tictactoeNxN;
+    private void Start()
+    {
+        tictactoeNxN = GameManager.Instance.tictactoe;
+    }
     public void OnButtonClick()
     {
         // 활성화된 TicTacToe 인스턴스 확인 및 처리
         if (tictactoeNxN != null)
         {
             tictactoeNxN.MoveCube();
-            UpdateButtonImage(tictactoeNxN.IsExpanded);
+            UpdateButtonImage(tictactoeNxN.isExpanded);
         }
     }
 

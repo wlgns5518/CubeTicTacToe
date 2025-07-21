@@ -8,6 +8,7 @@ public class GameManager : MonoBehaviour
     private int currentVersion;
     public int CurrentVersion => currentVersion + 3;
     public bool isOTurnFirst; // O가 먼저 시작하는지 여부
+    public TicTacToeNxN tictactoe;
     void Awake()
     {
         // 싱글톤 초기화
