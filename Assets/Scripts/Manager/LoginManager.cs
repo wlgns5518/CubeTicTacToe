@@ -18,6 +18,8 @@ public class LoginManager : MonoBehaviour
     private FirebaseAuth auth;
     private GoogleSignInConfiguration configuration;
 
+    public static FirebaseUser user;
+
     private void Awake()
     {
         // ΩÃ±€≈Ê ¿ŒΩ∫≈œΩ∫ º≥¡§
@@ -128,6 +130,7 @@ public class LoginManager : MonoBehaviour
             else
             {
                 AddToInformation($"Sign In Successful. User: {task.Result.DisplayName}, Email: {task.Result.Email}");
+                user = task.Result;
                 GameManager.Instance.GameSet();
             }
         });
@@ -181,6 +184,7 @@ public class LoginManager : MonoBehaviour
             else
             {
                 AddToInformation($"Sign-In successful. User: {email}");
+                user = task.Result.User;
                 GameManager.Instance.GameSet();
             }
         });
@@ -196,6 +200,7 @@ public class LoginManager : MonoBehaviour
             else
             {
                 AddToInformation("Anonymous Sign-In Successful.");
+                user = task.Result.User;
                 GameManager.Instance.GameSet();
             }
         });

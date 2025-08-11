@@ -4,6 +4,7 @@ using UnityEngine;
 public class LoginUI : MonoBehaviour
 {
     public GameObject emailLoginPanel;
+    public GameObject LoginPanel;
     public TMP_InputField emailInputField; // 이메일 입력 필드
     public TMP_InputField passwordInputField; // 비밀번호 입력 필드
     
@@ -26,5 +27,9 @@ public class LoginUI : MonoBehaviour
     public void CloseButton()
     {
         emailLoginPanel.SetActive(false);
+    }
+    public void Login()
+    {
+        LoginPanel.SetActive(true);
     }
 }
