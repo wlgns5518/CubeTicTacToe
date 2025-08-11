@@ -1,8 +1,7 @@
-using Photon.Pun;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class CameraMove : MonoBehaviourPun
+public class CameraMove : MonoBehaviour
 {
     public float moveSpeed = 50f;
     public float rotationSpeed = 25f;
@@ -10,6 +9,7 @@ public class CameraMove : MonoBehaviourPun
     public float minDistance = 5f; // 확대의 최대값
     public float maxDistance = 15f; // 축소의 최대값
 
+    private Vector3 lastMousePosition;
     private float distance = 10f;
     private Vector3 target;
     private float scrollValue = 0;
