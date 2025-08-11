@@ -772,8 +772,8 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 245923350}
-  - {fileID: 120378117}
   - {fileID: 160032138}
+  - {fileID: 120378117}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -870,7 +870,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   emailLoginPanel: {fileID: 1417704655}
-  LoginPanel: {fileID: 0}
+  LoginPanel: {fileID: 120378116}
   emailInputField: {fileID: 309329389}
   passwordInputField: {fileID: 1005765595}
 --- !u!1 &296344324
