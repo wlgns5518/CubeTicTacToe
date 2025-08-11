@@ -7,6 +7,8 @@ public class GameUI : MonoBehaviour
     private Coroutine turnTimerCoroutine; // 턴 타이머를 관리하는 코루틴
     [SerializeField] private TextMeshProUGUI timerText; // 에디터에서 할당
     public GameOverUI gameButton;
+    public TextMeshProUGUI infoText;
+
     public void StartTurnTimer()
     {
         if (turnTimerCoroutine != null)
@@ -54,12 +56,43 @@ public class GameUI : MonoBehaviour
     }
     public void GameResult()
     {
-        // 팝업창 활성화 및 결과 메시지 설정
         if (gameButton != null)
         {
+            // 플레이어가 "O"이고 현재 턴이 "O"라면 승리로 간주
+            if (GameManager.Instance.PlayerRole == "O" && GameManager.Instance.tictactoe.isOTurn)
+            {
+                gameButton.SetResultMessage(true); // O 플레이어 승리
+            }
+            // 플레이어가 "X"이고 현재 턴이 "X"라면 승리로 간주
+            else if (GameManager.Instance.PlayerRole == "X" && !GameManager.Instance.tictactoe.isOTurn)
+            {
+                gameButton.SetResultMessage(true); // X 플레이어 승리
+            }
+            else
+            {
+                gameButton.SetResultMessage(false); // 패배
+            }
+
             gameButton.resultPopup.SetActive(true);
             gameButton.resultButton.gameObject.SetActive(true);
-            gameButton.SetResultMessage(GameManager.Instance.tictactoe.isOTurn); // 승리 여부 전달
+        }
+    }
+    public void ShowInfoText(string message)
+    {
+        if (infoText != null)
+        {
+            infoText.text = message;
+            infoText.gameObject.SetActive(true);
+            StartCoroutine(HideInfoText(1f)); // 1초 후 텍스트 숨기기
+        }
+    }
+
+    private IEnumerator HideInfoText(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (infoText != null)
+        {
+            infoText.gameObject.SetActive(false);
         }
     }
 }

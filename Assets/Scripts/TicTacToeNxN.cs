@@ -1,8 +1,9 @@
+using Photon.Pun;
 using System;
 using System.Collections;
 using UnityEngine;
 
-public class TicTacToeNxN : MonoBehaviour
+public class TicTacToeNxN : MonoBehaviourPunCallbacks
 {
     private int N;
     [SerializeField] private GameObject cubePrefab; // 에디터에서 할당
@@ -15,6 +16,7 @@ public class TicTacToeNxN : MonoBehaviour
     private bool isMoving = false; // 코루틴 실행 여부 확인
     public event Action OnAITurnStarted; // AI 턴 시작 이벤트
     public bool isAI = false;
+    public bool isPlayerO;
     [SerializeField] private GameUI gameUI;
 
     // 중앙 값 계산 (모든 큐브의 원래 위치의 평균)
@@ -49,11 +51,24 @@ public class TicTacToeNxN : MonoBehaviour
         {
             centerPosition /= cubeCount; // 평균 위치 계산
         }
+    }
+    private void Start()
+    {
         // 초기 턴 설정
         isOTurn = GameManager.Instance.isOTurnFirst;
         if (GameManager.Instance.IsAIMode())
         {
             isAI = true;
+        }
+        if (isAI == false)
+        {
+            //플레이어가 O인지 확인
+            isPlayerO = GameManager.Instance.PlayerRole == "O";
+            if ((isOTurn && isPlayerO) || (!isOTurn && !isPlayerO))
+            {
+                gameUI.ShowInfoText("your turn");
+                return;
+            }
         }
         gameUI.StartTurnTimer();// 첫 턴 타이머 시작
     }
@@ -71,7 +86,7 @@ public class TicTacToeNxN : MonoBehaviour
     {
         isMoving = true; // 코루틴 실행 중 상태 설정
         float elapsedTime = 0f;
-        float duration = 2f; // 이동 시간
+        float duration = 0.5f; // 이동 시간
         while (elapsedTime < duration)
         {
             elapsedTime += Time.deltaTime;
@@ -108,40 +123,81 @@ public class TicTacToeNxN : MonoBehaviour
     }
 
     public void OnCubeClicked(int x, int y, int z, GameObject cube)
-    {
-        if (gameOver) return; // 게임이 끝났으면 무시
-        if (board[x, y, z] != 0) return; // 이미 선택된 칸은 무시
+{
+    if (gameOver) return; // 게임이 끝났으면 무시
+    if (board[x, y, z] != 0) return; // 이미 선택된 칸은 무시
 
+    if ((isOTurn && !isPlayerO) || (!isOTurn && isPlayerO))
+    {
+        gameUI.ShowInfoText("Not your turn");
+        return;
+    }
+
+    board[x, y, z] = isOTurn ? 1 : 2;
+    Cube cubeObj = cube.GetComponent<Cube>();
+    cubeObj.cubeMesh.enabled = false;
+
+    if (isOTurn)
+    {
+        Transform oObj = cubeObj.oObj;
+        oObj.gameObject.SetActive(isOTurn);
+    }
+    else
+    {
+        Transform xObj = cubeObj.xObj;
+        xObj.gameObject.SetActive(!isOTurn);
+    }
+
+    photonView.RPC("BroadcastMove", RpcTarget.All, x, y, z, isOTurn);
+
+    int player = isOTurn ? 1 : 2;
+    int completedLines = CheckCompletedLines(player);
+
+    if (completedLines == 1)
+    {
+        photonView.RPC("HandleGameOver", RpcTarget.All); // 게임 종료 동기화
+    }
+    else
+    {
+        photonView.RPC("ToggleTurn", RpcTarget.All); // 턴 전환 동기화
+        if (isAI && !isOTurn)
+        {
+            OnAITurnStarted?.Invoke();
+        }
+        gameUI.StartTurnTimer(); // 다음 턴 타이머 시작
+    }
+}
+
+    [PunRPC]
+    public void HandleGameOver()
+    {
+        gameOver = true;
+        gameUI.GameResult();
+    }
+
+    [PunRPC]
+    public void ToggleTurn()
+    {
+        isOTurn = !isOTurn; // 턴 전환
+    }
+    [PunRPC]
+    public void BroadcastMove(int x, int y, int z, bool isOTurn)
+    {
+        // 모든 플레이어에게 동기화
         board[x, y, z] = isOTurn ? 1 : 2;
+        GameObject cube = cubes[x, y, z];
         Cube cubeObj = cube.GetComponent<Cube>();
         cubeObj.cubeMesh.enabled = false;
 
         if (isOTurn)
         {
             Transform oObj = cubeObj.oObj;
-            oObj.gameObject.SetActive(isOTurn);
+            oObj.gameObject.SetActive(true);
         }
         else
         {
             Transform xObj = cubeObj.xObj;
-            xObj.gameObject.SetActive(!isOTurn);
-        }
-
-        int player = isOTurn ? 1 : 2;
-        int completedLines = CheckCompletedLines(player);
-        if (completedLines == 1)
-        {
-            gameOver = true;
-            gameUI.GameResult();
-        }
-        else
-        {
-            isOTurn = !isOTurn;
-            if (isAI && !isOTurn)
-            {
-                OnAITurnStarted?.Invoke();
-            }
-            gameUI.StartTurnTimer(); // 다음 턴 타이머 시작
+            xObj.gameObject.SetActive(true);
         }
     }
 
