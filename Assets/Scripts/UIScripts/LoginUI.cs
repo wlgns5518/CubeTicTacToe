@@ -12,18 +12,18 @@ public class LoginUI : MonoBehaviour
     {
         emailLoginPanel.SetActive(true);
     }
-    public void SignInButton()
-    {
-        string email = emailInputField.text; // 입력된 이메일
-        string password = passwordInputField.text; // 입력된 비밀번호
-        LoginManager.Instance.RegisterWithEmail(email, password);
-    }
-    public void LoginButton()
-    {
-        string email = emailInputField.text; // 입력된 이메일
-        string password = passwordInputField.text; // 입력된 비밀번호
-        LoginManager.Instance.SignInWithEmail(email, password);
-    }
+    //public void SignInButton()
+    //{
+    //    string email = emailInputField.text; // 입력된 이메일
+    //    string password = passwordInputField.text; // 입력된 비밀번호
+    //    LoginManager.Instance.RegisterWithEmail(email, password);
+    //}
+    //public void LoginButton()
+    //{
+    //    string email = emailInputField.text; // 입력된 이메일
+    //    string password = passwordInputField.text; // 입력된 비밀번호
+    //    LoginManager.Instance.SignInWithEmail(email, password);
+    //}
     public void CloseButton()
     {
         emailLoginPanel.SetActive(false);

@@ -59,7 +59,7 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
         if (GameManager.Instance.IsAIMode())
         {
             isAI = true;
-            gameUI.ShowInfoText("your turn");
+            gameUI.UpdateInfoText("your turn");
         }
         if (!isAI)
         {
@@ -67,7 +67,7 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
             isPlayerO = GameManager.Instance.PlayerRole == "O";
             if ((isOTurn && isPlayerO) || (!isOTurn && !isPlayerO))
             {
-                gameUI.ShowInfoText("your turn");
+                gameUI.UpdateInfoText("your turn");
                 return;
             }
         }
@@ -166,7 +166,7 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
         {
             if ((isOTurn && !isPlayerO) || (!isOTurn && isPlayerO))
             {
-                gameUI.ShowInfoText("Not your turn");
+                gameUI.UpdateInfoText("Not your turn");
                 return;
             }
 
@@ -197,15 +197,9 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
             else
             {
                 photonView.RPC("ToggleTurn", RpcTarget.All); // 턴 전환 동기화
-                if (isAI && !isOTurn)
-                {
-                    OnAITurnStarted?.Invoke();
-                }
-                gameUI.StartTurnTimer(); // 다음 턴 타이머 시작
             }
         }
     }
-
     [PunRPC]
     public void HandleGameOver()
     {
@@ -217,6 +211,7 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
     public void ToggleTurn()
     {
         isOTurn = !isOTurn; // 턴 전환
+        gameUI.StartTurnTimer(); // 다음 턴 타이머 시작
     }
     [PunRPC]
     public void BroadcastMove(int x, int y, int z, bool isOTurn)

@@ -47,6 +47,13 @@ public class LoginManager : MonoBehaviour
                 if (task.Result == DependencyStatus.Available)
                 {
                     AddToInformation("Firebase dependencies are available.");
+                    FirebaseApp app = FirebaseApp.DefaultInstance;
+
+                    // FirebaseApp 초기화 후 DatabaseUrl 설정
+                    if (app.Options.DatabaseUrl == null)
+                    {
+                        app.Options.DatabaseUrl = new Uri("https://cubetictactoe-default-rtdb.firebaseio.com");
+                    }
                     auth = FirebaseAuth.DefaultInstance;
                 }
                 else
@@ -131,8 +138,7 @@ public class LoginManager : MonoBehaviour
             {
                 AddToInformation($"Sign In Successful. User: {task.Result.DisplayName}, Email: {task.Result.Email}");
                 user = task.Result;
-                GameManager.Instance.GameSet();
-            }
+                GameManager.Instance.GameSet();          }
         });
     }
 
@@ -146,49 +152,49 @@ public class LoginManager : MonoBehaviour
         GoogleSignIn.DefaultInstance.SignInSilently().ContinueWith(OnAuthenticationFinished);
     }
 
-    public void RegisterWithEmail(string email,string password)
-    {
-        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
-        {
-            AddToInformation("Email or Password is empty.");
-            return;
-        }
+    //public void RegisterWithEmail(string email,string password)
+    //{
+    //    if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+    //    {
+    //        AddToInformation("Email or Password is empty.");
+    //        return;
+    //    }
 
-        auth.CreateUserWithEmailAndPasswordAsync(email, password).ContinueWithOnMainThread(task =>
-        {
-            if (task.IsFaulted || task.IsCanceled)
-            {
-                AddToInformation("Registration failed: " + task.Exception?.Message);
-            }
-            else
-            {
-                AddToInformation($"Registration successful. User: {email}");
-            }
-        });
-    }
+    //    auth.CreateUserWithEmailAndPasswordAsync(email, password).ContinueWithOnMainThread(task =>
+    //    {
+    //        if (task.IsFaulted || task.IsCanceled)
+    //        {
+    //            AddToInformation("Registration failed: " + task.Exception?.Message);
+    //        }
+    //        else
+    //        {
+    //            AddToInformation($"Registration successful. User: {email}");
+    //        }
+    //    });
+    //}
 
-    public void SignInWithEmail(string email, string password)
-    {
-        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
-        {
-            AddToInformation("Email or Password is empty.");
-            return;
-        }
+    //public void SignInWithEmail(string email, string password)
+    //{
+    //    if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+    //    {
+    //        AddToInformation("Email or Password is empty.");
+    //        return;
+    //    }
 
-        auth.SignInWithEmailAndPasswordAsync(email, password).ContinueWithOnMainThread(task =>
-        {
-            if (task.IsFaulted || task.IsCanceled)
-            {
-                AddToInformation("Sign-In failed: " + task.Exception?.Message);
-            }
-            else
-            {
-                AddToInformation($"Sign-In successful. User: {email}");
-                user = task.Result.User;
-                GameManager.Instance.GameSet();
-            }
-        });
-    }
+    //    auth.SignInWithEmailAndPasswordAsync(email, password).ContinueWithOnMainThread(task =>
+    //    {
+    //        if (task.IsFaulted || task.IsCanceled)
+    //        {
+    //            AddToInformation("Sign-In failed: " + task.Exception?.Message);
+    //        }
+    //        else
+    //        {
+    //            AddToInformation($"Sign-In successful. User: {email}");
+    //            user = task.Result.User;
+    //            GameManager.Instance.GameSet();
+    //        }
+    //    });
+    //}
     public void SignInAnonymously()
     {
         auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
@@ -201,6 +207,7 @@ public class LoginManager : MonoBehaviour
             {
                 AddToInformation("Anonymous Sign-In Successful.");
                 user = task.Result.User;
+                GameManager.Instance.GetUserData();
                 GameManager.Instance.GameSet();
             }
         });

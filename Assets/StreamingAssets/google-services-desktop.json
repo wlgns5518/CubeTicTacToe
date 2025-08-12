@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "547845580475",
+    "firebase_url": "https://cubetictactoe-default-rtdb.firebaseio.com",
     "project_id": "cubetictactoe",
     "storage_bucket": "cubetictactoe.firebasestorage.app"
   },

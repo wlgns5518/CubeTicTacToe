@@ -1,3 +1,5 @@
+using Firebase.Database;
+using Firebase.Extensions;
 using Photon.Pun;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -7,11 +9,13 @@ public class GameManager : MonoBehaviourPunCallbacks
     public static GameManager Instance { get; private set; }
     private int currentMode; // 현재 게임 모드 저장
     private int currentVersion;
+    private int playerScore;
     public int CurrentVersion => currentVersion + 3;
     public bool isOTurnFirst; // O가 먼저 시작하는지 여부
     public TicTacToeNxN tictactoe;
 
     public string PlayerRole { get; private set; } // "O" 또는 "X"
+    private DatabaseReference databaseReference;
 
     void Awake()
     {
@@ -23,8 +27,92 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        
+    }
+    public void GetUserData()
+    {
+        // Firebase Database 참조 초기화
+        if (LoginManager.user != null)
+        {
+            string userId = LoginManager.user.UserId;
+            databaseReference = FirebaseDatabase.DefaultInstance.GetReference($"users/{userId}");
+        }
+        LoadPlayerScore();
+    }
+    public void SavePlayerScore(int playerScore)
+    {
+        if (databaseReference == null)
+        {
+            Debug.LogError("DatabaseReference가 초기화되지 않았습니다.");
+            return;
+        }
+
+        databaseReference.Child("playerScore").SetValueAsync(playerScore).ContinueWithOnMainThread(task =>
+        {
+            if (task.IsCompleted)
+            {
+                Debug.Log("PlayerScore 저장 완료: " + playerScore);
+            }
+            else
+            {
+                Debug.LogError("PlayerScore 저장 실패: " + task.Exception);
+            }
+        });
     }
 
+    public void LoadPlayerScore()
+    {
+        if (databaseReference == null)
+        {
+            Debug.LogError("DatabaseReference가 초기화되지 않았습니다.");
+            return;
+        }
+
+        databaseReference.Child("playerScore").GetValueAsync().ContinueWithOnMainThread(task =>
+        {
+            if (task.IsCompleted)
+            {
+                if (task.Result.Exists)
+                {
+                    int score = int.Parse(task.Result.Value.ToString());
+                    playerScore = score;
+                    Debug.Log("PlayerScore 로드 완료: " + score);
+                }
+                else
+                {
+                    Debug.Log("PlayerScore가 존재하지 않습니다. 기본값을 설정합니다.");
+                    SavePlayerScore(1000); // 기본값 저장
+                }
+            }
+            else
+            {
+                Debug.LogError("PlayerScore 로드 실패: " + task.Exception);
+            }
+        });
+    }
+    public int[] UpdatePlayerScore(bool win)
+    {
+        int score = 0;
+        // CurrentVersion에 따라 점수 랜덤 할당
+        if (currentVersion == 0)
+        {
+            score = Random.Range(1, 4); // 1~3점
+        }
+        else if (currentVersion == 1)
+        {
+            score = Random.Range(3, 6); // 3~5점
+        }
+        if (win)
+            playerScore += score;
+        else
+            playerScore -= score;
+        if(playerScore<0)
+            playerScore = 0;
+        SavePlayerScore(playerScore);
+        int[] Scores = { playerScore, score };
+        return Scores;
+    }
     public void AssignRoles()
     {
         if (PhotonNetwork.IsMasterClient)
@@ -58,7 +146,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
         else if (currentVersion == 1)
         {
-            SceneManager.LoadScene(3); // 4x4 게임
+            SceneManager.LoadScene(2); // 4x4 게임
         }
     }
 
@@ -84,4 +172,5 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         currentVersion = version;
     }
+    
 }

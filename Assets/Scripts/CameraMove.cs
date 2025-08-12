@@ -8,7 +8,7 @@ public class CameraMove : MonoBehaviourPun
     public float rotationSpeed = 25f;
     public float zoomSpeed = 200f;
     public float minDistance = 5f; // 확대의 최대값
-    public float maxDistance = 15f; // 축소의 최대값
+    public float maxDistance = 20f; // 축소의 최대값
 
     private float distance = 10f;
     private Vector3 target;

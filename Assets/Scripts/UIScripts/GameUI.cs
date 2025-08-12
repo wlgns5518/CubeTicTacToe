@@ -8,6 +8,7 @@ public class GameUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI timerText; // 에디터에서 할당
     public GameOverUI gameButton;
     public TextMeshProUGUI infoText;
+    public TextMeshProUGUI playerScoreText;
 
     public void StartTurnTimer()
     {
@@ -56,28 +57,50 @@ public class GameUI : MonoBehaviour
     }
     public void GameResult()
     {
-        if (gameButton != null)
+        if(GameManager.Instance.IsAIMode())
         {
-            // 플레이어가 "O"이고 현재 턴이 "O"라면 승리로 간주
-            if (GameManager.Instance.PlayerRole == "O" && GameManager.Instance.tictactoe.isOTurn)
+            UpdatePlayerScore(GameManager.Instance.tictactoe.isOTurn);
+        }
+        else
+        {
+            if (gameButton != null)
             {
-                gameButton.SetResultMessage(true); // O 플레이어 승리
+                // 플레이어가 "O"이고 현재 턴이 "O"라면 승리로 간주
+                if (GameManager.Instance.PlayerRole == "O" && GameManager.Instance.tictactoe.isOTurn)
+                {
+                    UpdatePlayerScore(true);
+                }
+                // 플레이어가 "X"이고 현재 턴이 "X"라면 승리로 간주
+                else if (GameManager.Instance.PlayerRole == "X" && !GameManager.Instance.tictactoe.isOTurn)
+                {
+                    UpdatePlayerScore(true);
+                }
+                else
+                {
+                    UpdatePlayerScore(false);
+                }
+                
             }
-            // 플레이어가 "X"이고 현재 턴이 "X"라면 승리로 간주
-            else if (GameManager.Instance.PlayerRole == "X" && !GameManager.Instance.tictactoe.isOTurn)
-            {
-                gameButton.SetResultMessage(true); // X 플레이어 승리
-            }
-            else
-            {
-                gameButton.SetResultMessage(false); // 패배
-            }
-
-            gameButton.resultPopup.SetActive(true);
-            gameButton.resultButton.gameObject.SetActive(true);
+        }
+        gameButton.resultPopup.SetActive(true);
+        gameButton.resultButton.gameObject.SetActive(true);
+    }
+    public void UpdatePlayerScore(bool win)
+    {
+        if (win)
+        {
+            gameButton.SetResultMessage(win); // 승리
+            int[] Scores = GameManager.Instance.UpdatePlayerScore(win);
+            playerScoreText.text = Scores[0].ToString() + $"( + {Scores[1].ToString()})";
+        }
+        else
+        {
+            gameButton.SetResultMessage(win); // 패배
+            int[] Scores = GameManager.Instance.UpdatePlayerScore(win);
+            playerScoreText.text = Scores[0].ToString() + $"( - {Scores[1].ToString()})";
         }
     }
-    public void ShowInfoText(string message)
+    public void UpdateInfoText(string message)
     {
         if (infoText != null)
         {
