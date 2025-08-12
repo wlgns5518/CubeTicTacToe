@@ -26,9 +26,11 @@ public class GameManager : MonoBehaviourPunCallbacks
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
-
-        
+        DontDestroyOnLoad(gameObject); 
+    }
+    private void OnDestroy()
+    {
+        SavePlayerScore(playerScore);
     }
     public void GetUserData()
     {
@@ -140,14 +142,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             // isOTurnFirst 값을 모든 클라이언트에 동기화
             photonView.RPC("SyncIsOTurnFirst", RpcTarget.All, isOTurnFirst);
         }
-        if (currentVersion == 0)
-        {
-            SceneManager.LoadScene(2); // 3x3 게임
-        }
-        else if (currentVersion == 1)
-        {
-            SceneManager.LoadScene(2); // 4x4 게임
-        }
+        SceneManager.LoadScene(2); // 3x3 게임
     }
 
     [PunRPC]

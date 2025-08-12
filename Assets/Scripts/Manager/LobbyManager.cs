@@ -8,8 +8,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
 {
     private readonly string gameVersion = "1";
     public TextMeshProUGUI connectionInfoText;
-    public GameObject machingPopup;
-    public TextMeshProUGUI machingText;
+    public MainPageUI mainPageUI;
 
     void Start()
     {
@@ -87,8 +86,8 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     public override void OnJoinedRoom()
     {
         connectionInfoText.text = "Connected with Room";
-        machingPopup.SetActive(true);
-        machingText.text = $"Waiting for players... ({PhotonNetwork.CurrentRoom.PlayerCount}/{PhotonNetwork.CurrentRoom.MaxPlayers})";
+        mainPageUI.MachingButton();
+        mainPageUI.machingText.text = $"Waiting for players... ({PhotonNetwork.CurrentRoom.PlayerCount}/{PhotonNetwork.CurrentRoom.MaxPlayers})";
     }
     [PunRPC]
     private void StartGameForAll(int mode)
@@ -97,7 +96,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     }
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        machingText.text = $"Waiting for players... ({PhotonNetwork.CurrentRoom.PlayerCount}/{PhotonNetwork.CurrentRoom.MaxPlayers})";
+        mainPageUI.machingText.text = $"Waiting for players... ({PhotonNetwork.CurrentRoom.PlayerCount}/{PhotonNetwork.CurrentRoom.MaxPlayers})";
         // 规 积己磊老 版快 眠啊 肺流
         if (PhotonNetwork.IsMasterClient)
         {
@@ -113,10 +112,6 @@ public class LobbyManager : MonoBehaviourPunCallbacks
                 photonView.RPC("StartGameForAll", RpcTarget.All, 1);
             }
         }
-    }
-    public void MachingCancel()
-    {
-        machingPopup.SetActive(false);
     }
     public void LeaveRoom()
     {

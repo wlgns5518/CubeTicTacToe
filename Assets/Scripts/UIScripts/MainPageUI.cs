@@ -1,10 +1,14 @@
+using TMPro;
 using UnityEngine;
 
-public class MainPageButton : MonoBehaviour
+public class MainPageUI : MonoBehaviour
 {
     public GameObject playPanel;
     public GameObject gamePanel;
     public GameObject setUpPanel;
+    public GameObject rankingPanel;
+    public GameObject machingPanel;
+    public TextMeshProUGUI machingText;
     public void PlayButton(int version)
     {
         SoundManager.Instance.PlayUIClickSound();
@@ -49,5 +53,25 @@ public class MainPageButton : MonoBehaviour
         LoginManager.Instance.SignOutFromGoogle();
         LoginManager.Instance.OnDisconnect();
         Application.Quit();
+    }
+    public void RankingButton()
+    {
+        SoundManager.Instance.PlayUIClickSound();
+        rankingPanel.SetActive(true);
+    }
+    public void RankingCloseButton()
+    {
+        SoundManager.Instance.PlayUIClickSound();
+        rankingPanel.SetActive(false);
+    }
+    public void MachingButton()
+    {
+        SoundManager.Instance.PlayUIClickSound();
+        machingPanel.SetActive(true);
+    }
+    public void MachingCloseButton()
+    {
+        SoundManager.Instance.PlayUIClickSound();
+        machingPanel.SetActive(false);
     }
 }

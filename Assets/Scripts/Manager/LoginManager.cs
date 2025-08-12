@@ -1,5 +1,6 @@
 using Firebase;
 using Firebase.Auth;
+using Firebase.Database; // Firebase Realtime Database 추가
 using Firebase.Extensions;
 using Google;
 using System;
@@ -16,6 +17,7 @@ public class LoginManager : MonoBehaviour
     public string webClientId = "547845580475-6re3mh59m484pu68thvgpc896v6gtogi.apps.googleusercontent.com";
 
     private FirebaseAuth auth;
+    private FirebaseDatabase database; // Firebase Realtime Database 인스턴스
     private GoogleSignInConfiguration configuration;
 
     public static FirebaseUser user;
@@ -46,7 +48,7 @@ public class LoginManager : MonoBehaviour
             {
                 if (task.Result == DependencyStatus.Available)
                 {
-                    AddToInformation("Firebase dependencies are available.");
+                    Debug.Log("Firebase dependencies are available.");
                     FirebaseApp app = FirebaseApp.DefaultInstance;
 
                     // FirebaseApp 초기화 후 DatabaseUrl 설정
@@ -55,19 +57,20 @@ public class LoginManager : MonoBehaviour
                         app.Options.DatabaseUrl = new Uri("https://cubetictactoe-default-rtdb.firebaseio.com");
                     }
                     auth = FirebaseAuth.DefaultInstance;
+                    database = FirebaseDatabase.DefaultInstance; // Realtime Database 초기화
                 }
                 else
                 {
-                    AddToInformation("Firebase dependencies are not available: " + task.Result.ToString());
+                    Debug.Log("Firebase dependencies are not available: " + task.Result.ToString());
                 }
             }
             else if (task.IsFaulted)
             {
-                AddToInformation("Failed to check Firebase dependencies. Exception: " + task.Exception?.ToString());
+                Debug.Log("Failed to check Firebase dependencies. Exception: " + task.Exception?.ToString());
             }
             else if (task.IsCanceled)
             {
-                AddToInformation("Firebase dependency check was canceled.");
+                Debug.Log("Firebase dependency check was canceled.");
             }
         });
     }
@@ -80,19 +83,19 @@ public class LoginManager : MonoBehaviour
         GoogleSignIn.Configuration = configuration;
         GoogleSignIn.Configuration.UseGameSignIn = false;
         GoogleSignIn.Configuration.RequestIdToken = true;
-        AddToInformation("Calling SignIn");
+        Debug.Log("Calling SignIn");
         GoogleSignIn.DefaultInstance.SignIn().ContinueWith(OnAuthenticationFinished);
     }
 
     private void OnSignOut()
     {
-        AddToInformation("Calling SignOut");
+        Debug.Log("Calling SignOut");
         GoogleSignIn.DefaultInstance.SignOut();
     }
 
     public void OnDisconnect()
     {
-        AddToInformation("Calling Disconnect");
+        Debug.Log("Calling Disconnect");
         GoogleSignIn.DefaultInstance.Disconnect();
     }
 
@@ -105,17 +108,17 @@ public class LoginManager : MonoBehaviour
                 if (enumerator.MoveNext())
                 {
                     GoogleSignIn.SignInException error = (GoogleSignIn.SignInException)enumerator.Current;
-                    AddToInformation("Got Error: " + error.Status + " " + error.Message);
+                    Debug.Log("Got Error: " + error.Status + " " + error.Message);
                 }
                 else
                 {
-                    AddToInformation("Got Unexpected Exception?!?" + task.Exception);
+                    Debug.Log("Got Unexpected Exception?!?" + task.Exception);
                 }
             }
         }
         else if (task.IsCanceled)
         {
-            AddToInformation("Canceled");
+            Debug.Log("Canceled");
         }
         else
         {
@@ -129,17 +132,45 @@ public class LoginManager : MonoBehaviour
 
         auth.SignInWithCredentialAsync(credential).ContinueWithOnMainThread(task =>
         {
-            AddToInformation($"Task Status: IsFaulted={task.IsFaulted}, IsCanceled={task.IsCanceled}, IsCompleted={task.IsCompleted}");
+            Debug.Log($"Task Status: IsFaulted={task.IsFaulted}, IsCanceled={task.IsCanceled}, IsCompleted={task.IsCompleted}");
             if (task.IsFaulted || task.IsCanceled)
             {
-                AddToInformation("SignInWithCredentialAsync failed.");
+                Debug.Log("SignInWithCredentialAsync failed.");
             }
             else
             {
-                AddToInformation($"Sign In Successful. User: {task.Result.DisplayName}, Email: {task.Result.Email}");
                 user = task.Result;
-                GameManager.Instance.GameSet();          }
+
+                // Firebase Realtime Database에 user.UserId 저장
+                SaveUserIdToDatabase(user.UserId);
+
+                GameManager.Instance.GameSet();
+                GameManager.Instance.GetUserData();
+            }
         });
+    }
+
+    private void SaveUserIdToDatabase(string userId)
+    {
+        if (database != null)
+        {
+            DatabaseReference userRef = FirebaseDatabase.DefaultInstance.GetReference($"users/{userId}");
+            userRef.Child("userId").SetValueAsync(userId).ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCompleted)
+                {
+                    Debug.Log($"User ID {userId} successfully saved to Firebase Realtime Database.");
+                }
+                else
+                {
+                    Debug.LogError($"Failed to save User ID {userId} to Firebase Realtime Database: {task.Exception?.Message}");
+                }
+            });
+        }
+        else
+        {
+            Debug.LogError("Firebase Realtime Database is not initialized.");
+        }
     }
 
     public void OnSignInSilently()
@@ -147,70 +178,30 @@ public class LoginManager : MonoBehaviour
         GoogleSignIn.Configuration = configuration;
         GoogleSignIn.Configuration.UseGameSignIn = false;
         GoogleSignIn.Configuration.RequestIdToken = true;
-        AddToInformation("Calling SignIn Silently");
+        Debug.Log("Calling SignIn Silently");
 
         GoogleSignIn.DefaultInstance.SignInSilently().ContinueWith(OnAuthenticationFinished);
     }
 
-    //public void RegisterWithEmail(string email,string password)
-    //{
-    //    if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
-    //    {
-    //        AddToInformation("Email or Password is empty.");
-    //        return;
-    //    }
-
-    //    auth.CreateUserWithEmailAndPasswordAsync(email, password).ContinueWithOnMainThread(task =>
-    //    {
-    //        if (task.IsFaulted || task.IsCanceled)
-    //        {
-    //            AddToInformation("Registration failed: " + task.Exception?.Message);
-    //        }
-    //        else
-    //        {
-    //            AddToInformation($"Registration successful. User: {email}");
-    //        }
-    //    });
-    //}
-
-    //public void SignInWithEmail(string email, string password)
-    //{
-    //    if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
-    //    {
-    //        AddToInformation("Email or Password is empty.");
-    //        return;
-    //    }
-
-    //    auth.SignInWithEmailAndPasswordAsync(email, password).ContinueWithOnMainThread(task =>
-    //    {
-    //        if (task.IsFaulted || task.IsCanceled)
-    //        {
-    //            AddToInformation("Sign-In failed: " + task.Exception?.Message);
-    //        }
-    //        else
-    //        {
-    //            AddToInformation($"Sign-In successful. User: {email}");
-    //            user = task.Result.User;
-    //            GameManager.Instance.GameSet();
-    //        }
-    //    });
-    //}
     public void SignInAnonymously()
     {
         auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
         {
             if (task.IsFaulted || task.IsCanceled)
             {
-                AddToInformation("Anonymous Sign-In failed: " + task.Exception?.Message);
+                Debug.Log("Anonymous Sign-In failed: " + task.Exception?.Message);
             }
             else
             {
-                AddToInformation("Anonymous Sign-In Successful.");
                 user = task.Result.User;
-                GameManager.Instance.GetUserData();
+
+                // Firebase Realtime Database에 user.UserId 저장
+                SaveUserIdToDatabase(user.UserId);
+
+                Debug.Log("Anonymous Sign-In Successful.");
                 GameManager.Instance.GameSet();
+                GameManager.Instance.GetUserData();
             }
         });
     }
-    private void AddToInformation(string str) { infoText.text += "\n" + str; }
 }
