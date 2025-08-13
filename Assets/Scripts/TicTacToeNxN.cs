@@ -18,6 +18,8 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
     public bool isAI = false;
     public bool isPlayerO;
     [SerializeField] private GameUI gameUI;
+    //public CameraMove cameraMove;
+    public CameraMoveAndroid CameraMoveAndroid;
 
     // 중앙 값 계산 (모든 큐브의 원래 위치의 평균)
     public Vector3 centerPosition = Vector3.zero;
@@ -127,6 +129,7 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
     {
         if (gameOver) return; // 게임이 끝났으면 무시
         if (board[x, y, z] != 0) return; // 이미 선택된 칸은 무시
+        if (CameraMoveAndroid.cameraMoving) return;
         if (isAI)
         {
             board[x, y, z] = isOTurn ? 1 : 2;

@@ -13,14 +13,9 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     void Start()
     {
         PhotonNetwork.GameVersion = gameVersion;
-
         if (!PhotonNetwork.IsConnected)
         {
             PhotonNetwork.ConnectUsingSettings();
-        }
-        else
-        {
-            Debug.LogWarning("Already connected to Photon. Skipping ConnectUsingSettings.");
         }
     }
 

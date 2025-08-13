@@ -1,6 +1,7 @@
 using Firebase.Database;
 using Firebase.Extensions;
 using Photon.Pun;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,6 +17,9 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     public string PlayerRole { get; private set; } // "O" 또는 "X"
     private DatabaseReference databaseReference;
+    private TaskCompletionSource<bool> gameTasksCompleted = new TaskCompletionSource<bool>();
+
+    public Task GameTasksCompleted => gameTasksCompleted.Task;
 
     void Awake()
     {
@@ -39,8 +43,11 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             string userId = LoginManager.user.UserId;
             databaseReference = FirebaseDatabase.DefaultInstance.GetReference($"users/{userId}");
+            LoadPlayerScore();
+
+            // 작업 완료 신호
+            gameTasksCompleted.TrySetResult(true);
         }
-        LoadPlayerScore();
     }
     public void SavePlayerScore(int playerScore)
     {
@@ -70,21 +77,21 @@ public class GameManager : MonoBehaviourPunCallbacks
             Debug.LogError("DatabaseReference가 초기화되지 않았습니다.");
             return;
         }
-
-        databaseReference.Child("playerScore").GetValueAsync().ContinueWithOnMainThread(task =>
+        databaseReference.Child("playerScore").GetValueAsync().ContinueWith(task =>
         {
             if (task.IsCompleted)
             {
-                if (task.Result.Exists)
+                Debug.Log(task.Result);
+                if (task.Result.Exists && int.TryParse(task.Result.Value.ToString(), out int score))
                 {
-                    int score = int.Parse(task.Result.Value.ToString());
                     playerScore = score;
                     Debug.Log("PlayerScore 로드 완료: " + score);
                 }
                 else
                 {
-                    Debug.Log("PlayerScore가 존재하지 않습니다. 기본값을 설정합니다.");
-                    SavePlayerScore(1000); // 기본값 저장
+                    Debug.Log("PlayerScore가 존재하지 않거나 유효하지 않습니다. 기본값을 설정합니다.");
+                    playerScore = 1000; // 기본값 설정
+                    SavePlayerScore(playerScore); // 기본값을 데이터베이스에 저장
                 }
             }
             else

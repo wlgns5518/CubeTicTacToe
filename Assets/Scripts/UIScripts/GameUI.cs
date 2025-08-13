@@ -42,9 +42,9 @@ public class GameUI : MonoBehaviour
         // 팝업창 활성화 및 결과 메시지 설정
         if (gameButton != null)
         {
-            gameButton.resultPopup.SetActive(true);
-            gameButton.resultButton.gameObject.SetActive(true);
-            gameButton.SetResultMessage(!GameManager.Instance.tictactoe.isOTurn); // 승리 여부 전달
+            // isOTurn의 반대 값으로 결과 처리
+            GameManager.Instance.tictactoe.isOTurn = !GameManager.Instance.tictactoe.isOTurn;
+            GameResult();
         }
     }
 

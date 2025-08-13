@@ -1,3 +1,4 @@
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -50,8 +51,31 @@ public class MainPageUI : MonoBehaviour
     public void LogoutButton()
     {
         SoundManager.Instance.PlayUIClickSound();
-        LoginManager.Instance.SignOutFromGoogle();
-        LoginManager.Instance.OnDisconnect();
+
+        if (LoginManager.user != null)
+        {
+            // 로그인 제공자 확인
+            if (LoginManager.user.IsAnonymous) // 익명 로그인 여부 확인
+            {
+                Debug.Log("Logging out from Anonymous Login.");
+                Firebase.Auth.FirebaseAuth.DefaultInstance.SignOut(); // 익명 로그아웃
+            }
+            else if (LoginManager.user.ProviderId == "google.com") // Google 로그인 여부 확인
+            {
+                Debug.Log("Logging out from Google Login.");
+                LoginManager.Instance.SignOutFromGoogle();
+                LoginManager.Instance.OnDisconnect();
+            }
+            else
+            {
+                Debug.LogWarning("Unknown login provider.");
+            }
+        }
+        else
+        {
+            Debug.LogError("No user is currently logged in.");
+        }
+
         Application.Quit();
     }
     public void RankingButton()

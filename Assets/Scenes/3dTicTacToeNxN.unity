@@ -252,6 +252,7 @@ MonoBehaviour:
   isAI: 0
   isPlayerO: 0
   gameUI: {fileID: 205073752}
+  CameraMoveAndroid: {fileID: 7849813647230617419}
   centerPosition: {x: 0, y: 0, z: 0}
 --- !u!114 &252058107
 MonoBehaviour:
@@ -2369,49 +2370,33 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4791081831616699370}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5b482faea4225db42bea59b80d053b55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 50
   rotationSpeed: 25
-  zoomSpeed: 100
+  zoomSpeed: 200
   minDistance: 5
   maxDistance: 20
+  cameraMoving: 0
   rotateAction:
     m_Name: Rotate
     m_Type: 0
     m_ExpectedControlType: 
-    m_Id: db70c803-e6b4-415e-bded-e9d87d06aad6
+    m_Id: 9ac46880-7040-4db6-ab22-67f0bd9ad2c2
     m_Processors: 
     m_Interactions: 
-    m_SingletonActionBindings:
-    - m_Name: 
-      m_Id: ffb47cec-4af9-46ba-bd41-fa50021f78b7
-      m_Path: <Mouse>/leftButton
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Rotate
-      m_Flags: 0
+    m_SingletonActionBindings: []
     m_Flags: 0
   zoomAction:
     m_Name: Zoom
     m_Type: 0
     m_ExpectedControlType: 
-    m_Id: be694186-3dbc-4514-bf80-0c582d568718
+    m_Id: 080509b1-902b-4497-b56f-74fa918988e4
     m_Processors: 
     m_Interactions: 
-    m_SingletonActionBindings:
-    - m_Name: 
-      m_Id: 9ca26248-d375-4877-9e82-fa0649c1028c
-      m_Path: <Mouse>/scroll
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Zoom
-      m_Flags: 0
+    m_SingletonActionBindings: []
     m_Flags: 0
 --- !u!20 &2156724404779389014
 Camera:
@@ -2478,6 +2463,7 @@ GameObject:
   - component: {fileID: 232459924491013217}
   - component: {fileID: 1409477796879446029}
   - component: {fileID: 6730093468972384498}
+  - component: {fileID: 7849813647230617419}
   m_Layer: 0
   m_Name: MainCamera
   m_TagString: MainCamera
@@ -2530,6 +2516,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7849813647230617419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4791081831616699370}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4aa4358c5f52a354da2cd1cf3c05e5bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rotationSpeed: 25
+  zoomSpeed: 25
+  minDistance: 5
+  maxDistance: 20
+  cameraMoving: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

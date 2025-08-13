@@ -4,11 +4,11 @@ using UnityEngine.InputSystem;
 
 public class CameraMove : MonoBehaviourPun
 {
-    public float moveSpeed = 50f;
     public float rotationSpeed = 25f;
     public float zoomSpeed = 200f;
     public float minDistance = 5f; // 확대의 최대값
     public float maxDistance = 20f; // 축소의 최대값
+    public bool cameraMoving = false;
 
     private float distance = 10f;
     private Vector3 target;
@@ -17,6 +17,17 @@ public class CameraMove : MonoBehaviourPun
     // Input Actions
     public InputAction rotateAction;
     public InputAction zoomAction;
+    private void Awake()
+    {
+        //Rotate Action Bindings
+        rotateAction = new InputAction("Rotate", InputActionType.PassThrough);
+        rotateAction.AddBinding("<Mouse>/leftButton"); // 마우스 왼쪽 버튼
+        rotateAction.AddBinding("<Touchscreen>/delta"); // 터치 입력
+
+        // Zoom Action Bindings
+        zoomAction = new InputAction("Zoom", InputActionType.PassThrough);
+        zoomAction.AddBinding("<Mouse>/scroll"); // 마우스 휠
+    }
 
     public event System.Action<float> OnZoomEvent;
     private void OnEnable()
@@ -40,6 +51,7 @@ public class CameraMove : MonoBehaviourPun
         // 마우스 버튼이 눌렸을 때만 회전 처리
         if (rotateAction.IsPressed())
         {
+            cameraMoving = true;
             Vector2 delta = Mouse.current.delta.ReadValue(); // 마우스 움직임 값 읽기
             float yaw = delta.x * rotationSpeed * Time.deltaTime;
             float pitch = -delta.y * rotationSpeed * Time.deltaTime;
@@ -47,6 +59,8 @@ public class CameraMove : MonoBehaviourPun
             transform.RotateAround(target, transform.right, pitch);
             distance = Vector3.Distance(transform.position, target);
         }
+        else
+            cameraMoving = false;
         // Zoom camera
         if (scrollValue != 0)
         {

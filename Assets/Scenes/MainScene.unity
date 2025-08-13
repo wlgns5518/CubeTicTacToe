@@ -132,7 +132,7 @@ GameObject:
   - component: {fileID: 23225680}
   - component: {fileID: 23225679}
   m_Layer: 5
-  m_Name: LoginButton
+  m_Name: LogoutButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3644,7 +3644,7 @@ MonoBehaviour:
   gamePanel: {fileID: 857410794}
   setUpPanel: {fileID: 120378116}
   rankingPanel: {fileID: 1460163368}
-  machingPanel: {fileID: 0}
+  machingPanel: {fileID: 1416444923}
   machingText: {fileID: 1550859088}
 --- !u!1 &1290895145
 GameObject:

@@ -1,7 +1,6 @@
 using Firebase;
 using Firebase.Auth;
 using Firebase.Database; // Firebase Realtime Database 추가
-using Firebase.Extensions;
 using Google;
 using System;
 using System.Collections.Generic;
@@ -16,11 +15,15 @@ public class LoginManager : MonoBehaviour
     public TextMeshProUGUI infoText;
     public string webClientId = "547845580475-6re3mh59m484pu68thvgpc896v6gtogi.apps.googleusercontent.com";
 
+
     private FirebaseAuth auth;
     private FirebaseDatabase database; // Firebase Realtime Database 인스턴스
     private GoogleSignInConfiguration configuration;
 
     public static FirebaseUser user;
+
+    private TaskCompletionSource<bool> loginTasksCompleted = new TaskCompletionSource<bool>();
+    public Task LoginTasksCompleted => loginTasksCompleted.Task;
 
     private void Awake()
     {
@@ -35,14 +38,13 @@ public class LoginManager : MonoBehaviour
             Destroy(gameObject); // 중복 인스턴스 제거
             return;
         }
-
-        configuration = new GoogleSignInConfiguration { WebClientId = webClientId, RequestEmail = true, RequestIdToken = true };
         CheckFirebaseDependencies();
+        configuration = new GoogleSignInConfiguration { WebClientId = webClientId, RequestEmail = true, RequestIdToken = true };
     }
 
     private void CheckFirebaseDependencies()
     {
-        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
         {
             if (task.IsCompleted)
             {
@@ -95,8 +97,23 @@ public class LoginManager : MonoBehaviour
 
     public void OnDisconnect()
     {
-        Debug.Log("Calling Disconnect");
-        GoogleSignIn.DefaultInstance.Disconnect();
+        if (user != null)
+        {
+            if (user.IsAnonymous) // 익명 로그인 여부 확인
+            {
+                Debug.Log("Disconnecting Anonymous User.");
+                FirebaseDatabase.DefaultInstance.GoOffline(); // Firebase Database 연결 해제
+            }
+            else
+            {
+                Debug.Log("Disconnecting Google User.");
+                GoogleSignIn.DefaultInstance.Disconnect(); // Google 사용자 연결 해제
+            }
+        }
+        else
+        {
+            Debug.LogWarning("No user is currently logged in to disconnect.");
+        }
     }
 
     internal void OnAuthenticationFinished(Task<GoogleSignInUser> task)
@@ -130,7 +147,7 @@ public class LoginManager : MonoBehaviour
     {
         Credential credential = GoogleAuthProvider.GetCredential(idToken, null);
 
-        auth.SignInWithCredentialAsync(credential).ContinueWithOnMainThread(task =>
+        auth.SignInWithCredentialAsync(credential).ContinueWith(task =>
         {
             Debug.Log($"Task Status: IsFaulted={task.IsFaulted}, IsCanceled={task.IsCanceled}, IsCompleted={task.IsCompleted}");
             if (task.IsFaulted || task.IsCanceled)
@@ -143,9 +160,10 @@ public class LoginManager : MonoBehaviour
 
                 // Firebase Realtime Database에 user.UserId 저장
                 SaveUserIdToDatabase(user.UserId);
-
-                GameManager.Instance.GameSet();
                 GameManager.Instance.GetUserData();
+
+                // 모든 작업 완료 신호
+                loginTasksCompleted.TrySetResult(true);
             }
         });
     }
@@ -155,7 +173,7 @@ public class LoginManager : MonoBehaviour
         if (database != null)
         {
             DatabaseReference userRef = FirebaseDatabase.DefaultInstance.GetReference($"users/{userId}");
-            userRef.Child("userId").SetValueAsync(userId).ContinueWithOnMainThread(task =>
+            userRef.Child("userId").SetValueAsync(userId).ContinueWith(task =>
             {
                 if (task.IsCompleted)
                 {
@@ -185,7 +203,7 @@ public class LoginManager : MonoBehaviour
 
     public void SignInAnonymously()
     {
-        auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
+        auth.SignInAnonymouslyAsync().ContinueWith(task =>
         {
             if (task.IsFaulted || task.IsCanceled)
             {
@@ -194,13 +212,13 @@ public class LoginManager : MonoBehaviour
             else
             {
                 user = task.Result.User;
-
+                Debug.Log("Anonymous Sign-In Successful.");
                 // Firebase Realtime Database에 user.UserId 저장
                 SaveUserIdToDatabase(user.UserId);
-
-                Debug.Log("Anonymous Sign-In Successful.");
-                GameManager.Instance.GameSet();
                 GameManager.Instance.GetUserData();
+
+                // 모든 작업 완료 신호
+                loginTasksCompleted.TrySetResult(true);
             }
         });
     }
