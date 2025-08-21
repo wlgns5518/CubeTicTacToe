@@ -2528,8 +2528,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4aa4358c5f52a354da2cd1cf3c05e5bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rotationSpeed: 25
-  zoomSpeed: 25
+  rotationSpeed: 10
+  zoomSpeed: 5
   minDistance: 5
   maxDistance: 20
   cameraMoving: 0

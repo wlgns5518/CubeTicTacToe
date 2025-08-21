@@ -1,4 +1,7 @@
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using static UnityEngine.GraphicsBuffer;
 
 public class CubeClickHandler : MonoBehaviour
 {
@@ -15,13 +18,22 @@ public class CubeClickHandler : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (manager is TicTacToeNxN ticTacToeManager)
+        if (Touchscreen.current != null)
         {
-            ticTacToeManager.OnCubeClicked(x, y, z, gameObject);
+            var touch0 = Touchscreen.current.touches[0];
+            var touch1 = Touchscreen.current.touches[1];
+            if (touch0.isInProgress && !touch1.isInProgress)
+            {
+                GameManager.Instance.tictactoe.OnCubeClicked(x, y, z, gameObject);
+            }
         }
-        else
-        {
-            Debug.LogError("Manager type not supported.");
-        }
+        //if (manager is TicTacToeNxN ticTacToeManager)
+        //{
+        //    ticTacToeManager.OnCubeClicked(x, y, z, gameObject);
+        //}
+        //else
+        //{
+        //    Debug.LogError("Manager type not supported.");
+        //}
     }
 }

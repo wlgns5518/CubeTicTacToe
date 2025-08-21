@@ -1,6 +1,7 @@
 using Firebase;
 using Firebase.Auth;
 using Firebase.Database; // Firebase Realtime Database 추가
+using Firebase.Extensions;
 using Google;
 using System;
 using System.Collections.Generic;
@@ -41,10 +42,35 @@ public class LoginManager : MonoBehaviour
         CheckFirebaseDependencies();
         configuration = new GoogleSignInConfiguration { WebClientId = webClientId, RequestEmail = true, RequestIdToken = true };
     }
+    private void AutoLogin()
+    {
+        if (PlayerPrefs.HasKey("UserId"))
+        {
+            Debug.Log(auth);
+            // Firebase에서 사용자 데이터 가져오기
+            auth.SignInAnonymouslyAsync().ContinueWith(task =>
+            {
+                if (task.IsCompleted && !task.IsFaulted)
+                {
+                    user = auth.CurrentUser;
+                    GameManager.Instance.GetUserData();
+                    loginTasksCompleted.TrySetResult(true);
+                }
+                else
+                {
+                    Debug.LogError("자동 로그인 실패: " + task.Exception?.Message);
+                }
+            });
+        }
+        else
+        {
+            Debug.Log("자동 로그인 실패: 저장된 로그인 정보가 없습니다.");
+        }
+    }
 
     private void CheckFirebaseDependencies()
     {
-        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
         {
             if (task.IsCompleted)
             {
@@ -60,6 +86,8 @@ public class LoginManager : MonoBehaviour
                     }
                     auth = FirebaseAuth.DefaultInstance;
                     database = FirebaseDatabase.DefaultInstance; // Realtime Database 초기화
+                     //Firebase 초기화 완료 후 자동 로그인 시도
+                    AutoLogin();
                 }
                 else
                 {
@@ -157,7 +185,6 @@ public class LoginManager : MonoBehaviour
             else
             {
                 user = task.Result;
-
                 // Firebase Realtime Database에 user.UserId 저장
                 SaveUserIdToDatabase(user.UserId);
                 GameManager.Instance.GetUserData();

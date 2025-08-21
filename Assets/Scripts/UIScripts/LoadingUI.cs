@@ -17,9 +17,9 @@ public class LoadingUI : MonoBehaviour
 
         // 두 작업이 완료될 때까지 대기
         await Task.WhenAll(loginTask, gameTask);
-
         // 나머지 10%를 채움
         isTasksCompleted = true;
+        PlayerPrefs.SetString("UserId",LoginManager.user.UserId);
     }
 
     private void Update()

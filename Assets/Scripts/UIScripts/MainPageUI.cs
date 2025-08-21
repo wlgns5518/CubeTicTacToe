@@ -58,11 +58,17 @@ public class MainPageUI : MonoBehaviour
             if (LoginManager.user.IsAnonymous) // 익명 로그인 여부 확인
             {
                 Debug.Log("Logging out from Anonymous Login.");
+                // PlayerPrefs 데이터 삭제
+                PlayerPrefs.DeleteKey("UserId");
+                PlayerPrefs.Save();
                 Firebase.Auth.FirebaseAuth.DefaultInstance.SignOut(); // 익명 로그아웃
             }
             else if (LoginManager.user.ProviderId == "google.com") // Google 로그인 여부 확인
             {
                 Debug.Log("Logging out from Google Login.");
+                // PlayerPrefs 데이터 삭제
+                PlayerPrefs.DeleteKey("UserId");
+                PlayerPrefs.Save();
                 LoginManager.Instance.SignOutFromGoogle();
                 LoginManager.Instance.OnDisconnect();
             }

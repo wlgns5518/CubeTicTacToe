@@ -8,7 +8,11 @@ public class LoginUI : MonoBehaviour
     public GameObject loadingPanel;
     public TMP_InputField emailInputField; // 이메일 입력 필드
     public TMP_InputField passwordInputField; // 비밀번호 입력 필드
-    
+    private void Start()
+    {
+        if (PlayerPrefs.HasKey("UserId"))
+            Loading();
+    }
     public void EmailLoginButton()
     {
         emailLoginPanel.SetActive(true);

@@ -2,17 +2,17 @@ using UnityEngine;
 
 public class OXtoCamera : MonoBehaviour
 {
-    private Camera playerCamera;
+    private Camera mainCamera;
     void Start()
     {
-        playerCamera = Camera.main;
+        mainCamera = Camera.main;
     }
 
-    void Update()
+    private void FixedUpdate()
     {
-        if (playerCamera != null)
+        if (mainCamera != null)
         {
-            transform.LookAt(playerCamera.transform);
+            transform.LookAt(mainCamera.transform);
             // y축 기준 90도 회전 보정
             transform.Rotate(0, 90, 0);
         }
