@@ -8,20 +8,25 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviourPunCallbacks
 {
     public static GameManager Instance { get; private set; }
-    private int currentMode; // 현재 게임 모드 저장
-    private int currentVersion;
-    private int playerScore;
-    public int CurrentVersion => currentVersion + 3;
-    public bool isOTurnFirst; // O가 먼저 시작하는지 여부
+
+    private int currentMode;              // 현재 게임 모드
+    private int currentVersion;           // 게임 버전 (난이도/판 크기)
+    private int playerScore; // 내부에서만 수정 가능
+    public int PlayerScore => playerScore; // 외부에서 읽기 전용
+
+    public int CurrentVersion => currentVersion + 3; // 최소 3x3부터 시작
+    public bool isOTurnFirst;             // O가 먼저 시작하는지 여부
+    public string PlayerRole { get; private set; }   // "O" 또는 "X"
+
     public TicTacToeNxN tictactoe;
 
-    public string PlayerRole { get; private set; } // "O" 또는 "X"
     private DatabaseReference databaseReference;
-    private TaskCompletionSource<bool> gameTasksCompleted = new TaskCompletionSource<bool>();
+    private readonly TaskCompletionSource<bool> gameTasksCompleted = new();
 
     public Task GameTasksCompleted => gameTasksCompleted.Task;
 
-    void Awake()
+    #region Unity Lifecycle
+    private void Awake()
     {
         // 싱글톤 초기화
         if (Instance != null && Instance != this)
@@ -29,150 +34,131 @@ public class GameManager : MonoBehaviourPunCallbacks
             Destroy(gameObject);
             return;
         }
+
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
+
     private void OnDestroy()
     {
         SavePlayerScore(playerScore);
     }
+    #endregion
+
+    #region Firebase
     public void GetUserData()
     {
-        // Firebase Database 참조 초기화
-        if (LoginManager.user != null)
-        {
-            string userId = LoginManager.user.UserId;
-            databaseReference = FirebaseDatabase.DefaultInstance.GetReference($"users/{userId}");
-            LoadPlayerScore();
+        if (LoginManager.user == null) return;
 
-            // 작업 완료 신호
-            gameTasksCompleted.TrySetResult(true);
-        }
+        string userId = LoginManager.user.UserId;
+        databaseReference = FirebaseDatabase.DefaultInstance.GetReference($"users/{userId}");
+
+        LoadPlayerScore();
+        gameTasksCompleted.TrySetResult(true); // Firebase 초기화 완료 신호
     }
-    public void SavePlayerScore(int playerScore)
+
+    public void SavePlayerScore(int score)
     {
         if (databaseReference == null)
         {
-            Debug.LogError("DatabaseReference가 초기화되지 않았습니다.");
+            Debug.LogWarning("DatabaseReference가 초기화되지 않았습니다.");
             return;
         }
 
-        databaseReference.Child("playerScore").SetValueAsync(playerScore).ContinueWithOnMainThread(task =>
-        {
-            if (task.IsCompleted)
+        databaseReference.Child("playerScore").SetValueAsync(score)
+            .ContinueWithOnMainThread(task =>
             {
-                Debug.Log("PlayerScore 저장 완료: " + playerScore);
-            }
-            else
-            {
-                Debug.LogError("PlayerScore 저장 실패: " + task.Exception);
-            }
-        });
+                if (task.IsCompleted)
+                    Debug.Log($"PlayerScore 저장 완료: {score}");
+                else
+                    Debug.LogError($"PlayerScore 저장 실패: {task.Exception}");
+            });
     }
 
-    public void LoadPlayerScore()
+    private void LoadPlayerScore()
     {
-        if (databaseReference == null)
-        {
-            Debug.LogError("DatabaseReference가 초기화되지 않았습니다.");
-            return;
-        }
+        if (databaseReference == null) return;
+
         databaseReference.Child("playerScore").GetValueAsync().ContinueWith(task =>
         {
-            if (task.IsCompleted)
+            if (!task.IsCompleted)
             {
-                Debug.Log(task.Result);
-                if (task.Result.Exists && int.TryParse(task.Result.Value.ToString(), out int score))
-                {
-                    playerScore = score;
-                    Debug.Log("PlayerScore 로드 완료: " + score);
-                }
-                else
-                {
-                    Debug.Log("PlayerScore가 존재하지 않거나 유효하지 않습니다. 기본값을 설정합니다.");
-                    playerScore = 1000; // 기본값 설정
-                    SavePlayerScore(playerScore); // 기본값을 데이터베이스에 저장
-                }
+                Debug.LogError($"PlayerScore 로드 실패: {task.Exception}");
+                return;
+            }
+
+            if (task.Result.Exists && int.TryParse(task.Result.Value.ToString(), out int score))
+            {
+                playerScore = score;
+                Debug.Log($"PlayerScore 로드 완료: {score}");
             }
             else
             {
-                Debug.LogError("PlayerScore 로드 실패: " + task.Exception);
+                Debug.Log("PlayerScore 없음 → 기본값 1000 설정");
+                playerScore = 1000;
+                SavePlayerScore(playerScore);
             }
         });
     }
+    #endregion
+
+    #region Score
     public int[] UpdatePlayerScore(bool win)
     {
-        int score = 0;
-        // CurrentVersion에 따라 점수 랜덤 할당
-        if (currentVersion == 0)
+        int score = currentVersion switch
         {
-            score = Random.Range(1, 4); // 1~3점
-        }
-        else if (currentVersion == 1)
-        {
-            score = Random.Range(3, 6); // 3~5점
-        }
-        if (win)
-            playerScore += score;
-        else
-            playerScore -= score;
-        if(playerScore<0)
-            playerScore = 0;
+            0 => Random.Range(1, 4), // 1~3
+            1 => Random.Range(3, 6), // 3~5
+            _ => Random.Range(1, 3)  // 기본값 (안정성)
+        };
+
+        playerScore = Mathf.Max(0, playerScore + (win ? score : -score));
         SavePlayerScore(playerScore);
-        int[] Scores = { playerScore, score };
-        return Scores;
+
+        return new[] { playerScore, score };
     }
+    #endregion
+
+    #region Photon
     public void AssignRoles()
     {
-        if (PhotonNetwork.IsMasterClient)
-        {
-            // MasterClient는 true(O), 다른 플레이어는 false(X)
-            photonView.RPC("SetPlayerRole", RpcTarget.MasterClient, true);
-            photonView.RPC("SetPlayerRole", RpcTarget.Others, false);
-        }
+        if (!PhotonNetwork.IsMasterClient) return;
+
+        photonView.RPC(nameof(SetPlayerRole), RpcTarget.MasterClient, true);
+        photonView.RPC(nameof(SetPlayerRole), RpcTarget.Others, false);
     }
 
     [PunRPC]
-    private void SetPlayerRole(bool isO)
-    {
-        PlayerRole = isO ? "O" : "X";
-    }
+    private void SetPlayerRole(bool isO) => PlayerRole = isO ? "O" : "X";
 
+    [PunRPC]
+    private void SyncIsOTurnFirst(bool isOFirst) => isOTurnFirst = isOFirst;
+    #endregion
+
+    #region Game Flow
     public void GameStart(int mode)
     {
-        currentMode = mode; // 현재 모드 저장
-
-        // O와 X 순서를 랜덤으로 배정
+        currentMode = mode;
         isOTurnFirst = Random.value > 0.5f;
-        if(currentMode != 0)
+
+        if (mode != 0)
         {
-            // isOTurnFirst 값을 모든 클라이언트에 동기화
-            photonView.RPC("SyncIsOTurnFirst", RpcTarget.All, isOTurnFirst);
+            photonView.RPC(nameof(SyncIsOTurnFirst), RpcTarget.All, isOTurnFirst);
         }
-        SceneManager.LoadScene(2); // 3x3 게임
+
+        SceneManager.LoadScene(2); // 게임씬 로드
     }
 
-    [PunRPC]
-    private void SyncIsOTurnFirst(bool isOFirst)
-    {
-        isOTurnFirst = isOFirst;
-    }
     public void GameSet()
     {
         if (PhotonNetwork.InRoom)
-        {
             PhotonNetwork.LeaveRoom();
-        }
-        SceneManager.LoadScene(1);
+
+        SceneManager.LoadScene(1); // 로비로 이동
     }
 
-    public bool IsAIMode()
-    {
-        return currentMode == 0; // 현재 모드가 AI 대결인지 확인
-    }
-    public void SetVersion(int version)
-    {
-        currentVersion = version;
-    }
-    
+    public bool IsAIMode() => currentMode == 0;
+
+    public void SetVersion(int version) => currentVersion = version;
+    #endregion
 }
