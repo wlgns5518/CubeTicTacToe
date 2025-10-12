@@ -34,6 +34,7 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
 
     private void Awake()
     {
+        // GameManager에서 현재 보드 크기(N) 가져오기
         N = GameManager.Instance.CurrentVersion;
 
         cubes = new GameObject[N, N, N];
@@ -71,7 +72,7 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
         }
         if (count > 0) centerPosition /= count;
 
-        // 확장 위치 미리 계산 (매 프레임 계산 방지)
+        // 확장 위치 미리 계산
         for (int x = 0; x < N; x++)
         {
             for (int y = 0; y < N; y++)
@@ -168,6 +169,7 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
 
         if (isAI)
         {
+            // AI 모드: 바로 로컬에서 적용
             ApplyMoveLocal(x, y, z, isOTurn);
             int player = isOTurn ? 1 : 2;
 
@@ -179,19 +181,22 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
             }
             else
             {
+                // 턴 교체
                 isOTurn = !isOTurn;
-                if (!isOTurn) OnAITurnStarted?.Invoke();
+                if (!isOTurn) OnAITurnStarted?.Invoke(); // AI 차례 이벤트 호출
                 gameUI.StartTurnTimer();
             }
         }
         else
         {
+            // 멀티플레이 모드
             if ((isOTurn && !isPlayerO) || (!isOTurn && isPlayerO))
             {
                 gameUI.UpdateInfoText("Not your turn");
                 return;
             }
 
+            // 모든 클라이언트에 턴 전달
             photonView.RPC(nameof(BroadcastMove), RpcTarget.All, x, y, z, isOTurn);
 
             int player = isOTurn ? 1 : 2;
@@ -212,7 +217,7 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
         Cube c = cubeComps[x, y, z];
         c.cubeMesh.enabled = false;
 
-        // 두 오브젝트를 모두 끌/켜는 대신 필요한 것만 On
+        //필요한 것만 On
         if (turnIsO)
         {
             c.oObj.gameObject.SetActive(true);
@@ -281,6 +286,7 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
         return lines;
     }
 
+    // 특정 방향으로 라인이 완성되었는지 체크
     private bool IsLineCompleted(int player, int startX, int startY, int startZ, int stepX, int stepY, int stepZ)
     {
         for (int k = 0; k < N; k++)

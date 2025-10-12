@@ -16,7 +16,6 @@ public class CubeClickHandler : MonoBehaviour
     {
         if (Touchscreen.current != null)
         {
-            Debug.Log("큐브클릭");
             var touch0 = Touchscreen.current.touches[0];
             var touch1 = Touchscreen.current.touches[1];
             if (touch0.isInProgress && !touch1.isInProgress)

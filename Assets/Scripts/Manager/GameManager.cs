@@ -66,7 +66,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
 
         databaseReference.Child("playerScore").SetValueAsync(score)
-            .ContinueWithOnMainThread(task =>
+            .ContinueWith(task =>
             {
                 if (task.IsCompleted)
                     Debug.Log($"PlayerScore 저장 완료: {score}");
