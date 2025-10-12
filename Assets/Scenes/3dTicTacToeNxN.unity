@@ -246,13 +246,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cubePrefab: {fileID: 4601361173166561120, guid: 8db4ced1df746ba4784484b2501e9f05, type: 3}
+  gameUI: {fileID: 205073752}
+  CameraMoveAndroid: {fileID: 7849813647230617419}
   isOTurn: 0
   gameOver: 0
   isExpanded: 0
-  isAI: 0
   isPlayerO: 0
-  gameUI: {fileID: 205073752}
-  CameraMoveAndroid: {fileID: 7849813647230617419}
   centerPosition: {x: 0, y: 0, z: 0}
 --- !u!114 &252058107
 MonoBehaviour:
@@ -2532,7 +2531,6 @@ MonoBehaviour:
   zoomSpeed: 5
   minDistance: 5
   maxDistance: 20
-  cameraMoving: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
