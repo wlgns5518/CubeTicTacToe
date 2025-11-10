@@ -93,8 +93,6 @@ public class LoginManager : MonoBehaviour
                 {
                     SaveUserDocument(user.UserId);
                 }
-
-                OnLoginSuccess("자동 로그인 성공");
             }
             else
             {
@@ -156,8 +154,6 @@ public class LoginManager : MonoBehaviour
                 {
                     SaveUserDocument(user.UserId);
                 }
-
-                OnLoginSuccess("Google 로그인 성공");
             }
             else
             {
@@ -181,8 +177,6 @@ public class LoginManager : MonoBehaviour
                 {
                     SaveUserDocument(user.UserId);
                 }
-
-                OnLoginSuccess("익명 로그인 성공");
             }
             else
             {
@@ -211,15 +205,17 @@ public class LoginManager : MonoBehaviour
         userDoc.SetAsync(data, SetOptions.MergeAll).ContinueWithOnMainThread(t =>
         {
             if (t.IsCompletedSuccessfully)
+            {
                 Debug.Log($"User document {userId} 저장/병합 성공");
+                OnLoginSuccess();
+            }
             else
                 Debug.LogError($"User document 저장 실패: {t.Exception?.Message}");
         });
     }
 
-    private void OnLoginSuccess(string message)
+    private void OnLoginSuccess()
     {
-        Debug.Log(message);
         GameManager.Instance.GetUserData();
         loginTasksCompleted.TrySetResult(true);
     }
