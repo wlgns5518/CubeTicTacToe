@@ -1,6 +1,7 @@
-using Firebase.Database;
 using Firebase.Extensions;
+using Firebase.Firestore;
 using Photon.Pun;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,18 +10,19 @@ public class GameManager : MonoBehaviourPunCallbacks
 {
     public static GameManager Instance { get; private set; }
 
-    private int currentMode;              // 현재 게임 모드
-    private int currentVersion;           // 게임 버전 (난이도/판 크기)
-    private int playerScore; // 내부에서만 수정 가능
-    public int PlayerScore => playerScore; // 외부에서 읽기 전용
+    private int currentMode;
+    private int currentVersion;
+    private int playerScore;
+    public int PlayerScore => playerScore;
 
-    public int CurrentVersion => currentVersion + 3; // 최소 3x3부터 시작
-    public bool isOTurnFirst;             // O가 먼저 시작하는지 여부
-    public string PlayerRole { get; private set; }   // "O" 또는 "X"
+    public int CurrentVersion => currentVersion + 3;
+    public bool isOTurnFirst;
+    public string PlayerRole { get; private set; }
 
     public TicTacToeNxN tictactoe;
 
-    private DatabaseReference databaseReference;
+    private DocumentReference userDocRef;
+    private FirebaseFirestore firestore;
     private readonly TaskCompletionSource<bool> gameTasksCompleted = new();
 
     public Task GameTasksCompleted => gameTasksCompleted.Task;
@@ -28,13 +30,11 @@ public class GameManager : MonoBehaviourPunCallbacks
     #region Unity Lifecycle
     private void Awake()
     {
-        // 싱글톤 초기화
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
@@ -45,49 +45,55 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
     #endregion
 
-    #region Firebase
+    #region Firestore
     public void GetUserData()
     {
         if (LoginManager.user == null) return;
 
+        firestore = FirebaseFirestore.DefaultInstance;
         string userId = LoginManager.user.UserId;
-        databaseReference = FirebaseDatabase.DefaultInstance.GetReference($"users/{userId}");
+        userDocRef = firestore.Collection("users").Document(userId);
 
         LoadPlayerScore();
-        gameTasksCompleted.TrySetResult(true); // Firebase 초기화 완료 신호
     }
 
     public void SavePlayerScore(int score)
-    {
-        if (databaseReference == null)
+    { 
+        if (userDocRef == null)
         {
-            Debug.LogWarning("DatabaseReference가 초기화되지 않았습니다.");
+            Debug.LogWarning("User DocumentReference가 초기화되지 않았습니다.");
             return;
         }
 
-        databaseReference.Child("playerScore").SetValueAsync(score)
-            .ContinueWith(task =>
-            {
-                if (task.IsCompleted)
-                    Debug.Log($"PlayerScore 저장 완료: {score}");
-                else
-                    Debug.LogError($"PlayerScore 저장 실패: {task.Exception}");
-            });
+        var data = new Dictionary<string, object>
+        {
+            { "playerScore", score },
+            { "userId", LoginManager.user.UserId }
+        };
+
+        userDocRef.SetAsync(data, SetOptions.MergeAll).ContinueWithOnMainThread(task =>
+        {
+            if (task.IsCompletedSuccessfully)
+                Debug.Log($"PlayerScore 저장 완료: {score}");
+            else
+                Debug.LogError($"PlayerScore 저장 실패: {task.Exception}");
+        });
     }
 
     private void LoadPlayerScore()
     {
-        if (databaseReference == null) return;
+        if (userDocRef == null) return;
 
-        databaseReference.Child("playerScore").GetValueAsync().ContinueWith(task =>
+        userDocRef.GetSnapshotAsync().ContinueWithOnMainThread(task =>
         {
-            if (!task.IsCompleted)
+            if (!task.IsCompletedSuccessfully)
             {
                 Debug.LogError($"PlayerScore 로드 실패: {task.Exception}");
                 return;
             }
 
-            if (task.Result.Exists && int.TryParse(task.Result.Value.ToString(), out int score))
+            var snapshot = task.Result;
+            if (snapshot.Exists && snapshot.TryGetValue("playerScore", out int score))
             {
                 playerScore = score;
                 Debug.Log($"PlayerScore 로드 완료: {score}");
@@ -98,6 +104,8 @@ public class GameManager : MonoBehaviourPunCallbacks
                 playerScore = 1000;
                 SavePlayerScore(playerScore);
             }
+
+            gameTasksCompleted.TrySetResult(true);
         });
     }
     #endregion
@@ -107,9 +115,9 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         int score = currentVersion switch
         {
-            0 => Random.Range(1, 4), // 1~3
-            1 => Random.Range(3, 6), // 3~5
-            _ => Random.Range(1, 3)  // 기본값 (안정성)
+            0 => Random.Range(1, 4),
+            1 => Random.Range(3, 6),
+            _ => Random.Range(1, 3)
         };
 
         playerScore = Mathf.Max(0, playerScore + (win ? score : -score));
@@ -142,11 +150,9 @@ public class GameManager : MonoBehaviourPunCallbacks
         isOTurnFirst = Random.value > 0.5f;
 
         if (mode != 0)
-        {
             photonView.RPC(nameof(SyncIsOTurnFirst), RpcTarget.All, isOTurnFirst);
-        }
 
-        SceneManager.LoadScene(2); // 게임씬 로드
+        SceneManager.LoadScene(2);
     }
 
     public void GameSet()
@@ -154,7 +160,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.InRoom)
             PhotonNetwork.LeaveRoom();
 
-        SceneManager.LoadScene(1); // 로비로 이동
+        SceneManager.LoadScene(1);
     }
 
     public bool IsAIMode() => currentMode == 0;

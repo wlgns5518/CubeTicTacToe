@@ -1,117 +1,105 @@
-using Firebase.Database;
-using Firebase.Extensions;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
+using Firebase.Firestore;
+using Firebase.Extensions;
 
 public class Ranking : MonoBehaviour
 {
-    public TextMeshProUGUI leaderboardText; // 리더보드를 표시할 Text
-    public TextMeshProUGUI myRankText; // 내 랭킹을 표시할 Text
+    public TextMeshProUGUI leaderboardText;
+    public TextMeshProUGUI myRankText;
 
-    private DatabaseReference databaseRef; // Firebase Realtime Database 레퍼런스
+    private FirebaseFirestore firestore;
+
     private void Start()
     {
-        // Firebase Realtime Database 레퍼런스 초기화
-        databaseRef = FirebaseDatabase.DefaultInstance.RootReference;
-        // 리더보드 데이터 로드 및 UI 업데이트
+        firestore = FirebaseFirestore.DefaultInstance;
         LoadLeaderboardData();
     }
+
     private void LoadLeaderboardData()
     {
-        leaderboardText.text = "Loading leaderboard..."; // 초기화 메시지
-        databaseRef.Child("users").OrderByChild("playerScore").LimitToLast(5).GetValueAsync().ContinueWithOnMainThread(task =>
-        {
-            if (task.IsFaulted)
+        leaderboardText.text = "Loading leaderboard...";
+        firestore.Collection("users")
+            .OrderByDescending("playerScore")
+            .Limit(5)
+            .GetSnapshotAsync()
+            .ContinueWithOnMainThread(task =>
             {
-                Debug.LogError($"Failed to load leaderboard data: {task.Exception}");
-                leaderboardText.text = "Failed to load leaderboard.";
-                return;
-            }
-            if (task.IsCanceled)
-            {
-                Debug.LogError("Leaderboard data loading was canceled.");
-                leaderboardText.text = "Loading canceled.";
-                return;
-            }
-            if (task.IsCompleted)
-            {
-                DataSnapshot snapshot = task.Result;
-                if (snapshot == null || !snapshot.HasChildren)
+                if (task.IsFaulted)
+                {
+                    Debug.LogError($"Failed to load leaderboard data: {task.Exception}");
+                    leaderboardText.text = "Failed to load leaderboard.";
+                    return;
+                }
+                if (task.IsCanceled)
+                {
+                    leaderboardText.text = "Loading canceled.";
+                    return;
+                }
+
+                var snapshot = task.Result;
+                if (snapshot == null || snapshot.Count == 0)
                 {
                     leaderboardText.text = "No leaderboard data available.";
                     return;
                 }
 
                 string leaderboardData = "";
-                List<DataSnapshot> sortedList = new List<DataSnapshot>(snapshot.Children);
-                sortedList.Sort((a, b) => int.Parse(b.Child("playerScore").Value.ToString())
-                                          .CompareTo(int.Parse(a.Child("playerScore").Value.ToString())));
-
                 int rank = 1;
-                foreach (var childSnapshot in sortedList)
+                foreach (var doc in snapshot.Documents)
                 {
-                    if (childSnapshot.Child("playerScore").Value == null || childSnapshot.Child("userId").Value == null)
-                    {
-                        Debug.LogWarning("Invalid data found in leaderboard.");
-                        continue;
-                    }
-
-                    string userId = childSnapshot.Child("userId").Value.ToString();
-                    int score = int.Parse(childSnapshot.Child("playerScore").Value.ToString());
-
+                    if (!doc.TryGetValue("playerScore", out int score)) continue;
                     leaderboardData += $"{rank}. score : {score}\n";
                     rank++;
                 }
 
                 leaderboardText.text = leaderboardData;
                 LoadMyRankData();
-            }
-        });
+            });
     }
 
     private void LoadMyRankData()
     {
-        myRankText.text = "Loading my rank..."; // 초기화 메시지
+        myRankText.text = "Loading my rank...";
+        if (LoginManager.user == null)
+        {
+            myRankText.text = "Not logged in.";
+            return;
+        }
+
         string userId = LoginManager.user.UserId;
 
-        databaseRef.Child("users").OrderByChild("playerScore").GetValueAsync().ContinueWithOnMainThread(task =>
-        {
-            if (task.IsFaulted)
+        // 모든 사용자 점수 가져와서 순위 계산 (데이터 많아지면 Cloud Function/집계 컬렉션 고려)
+        firestore.Collection("users")
+            .OrderByDescending("playerScore")
+            .GetSnapshotAsync()
+            .ContinueWithOnMainThread(task =>
             {
-                Debug.LogError($"Failed to load my rank data: {task.Exception}");
-                myRankText.text = "Failed to load my rank.";
-                return;
-            }
-            if (task.IsCanceled)
-            {
-                Debug.LogError("My rank data loading was canceled.");
-                myRankText.text = "Loading canceled.";
-                return;
-            }
-            if (task.IsCompleted)
-            {
-                DataSnapshot snapshot = task.Result;
-                if (snapshot == null || !snapshot.HasChildren)
+                if (task.IsFaulted)
+                {
+                    Debug.LogError($"Failed to load rank list: {task.Exception}");
+                    myRankText.text = "Failed to load my rank.";
+                    return;
+                }
+                if (task.IsCanceled)
+                {
+                    myRankText.text = "Loading canceled.";
+                    return;
+                }
+
+                var snapshot = task.Result;
+                if (snapshot == null || snapshot.Count == 0)
                 {
                     myRankText.text = "No rank data available.";
                     return;
                 }
 
-                List<DataSnapshot> sortedList = new List<DataSnapshot>(snapshot.Children);
-                sortedList.Sort((a, b) => int.Parse(b.Child("playerScore").Value.ToString())
-                                          .CompareTo(int.Parse(a.Child("playerScore").Value.ToString())));
-
                 int rank = 1;
-                foreach (var childSnapshot in sortedList)
+                foreach (var doc in snapshot.Documents)
                 {
-                    if (childSnapshot.Child("userId").Value == null)
-                    {
-                        Debug.LogWarning("Invalid user data found.");
-                        continue;
-                    }
-
-                    string currentUserId = childSnapshot.Child("userId").Value.ToString();
+                    if (!doc.TryGetValue("userId", out string currentUserId)) continue;
                     if (currentUserId == userId)
                     {
                         myRankText.text = $"My Ranking: {rank}";
@@ -121,7 +109,6 @@ public class Ranking : MonoBehaviour
                 }
 
                 myRankText.text = "My Ranking: No Data";
-            }
-        });
+            });
     }
 }

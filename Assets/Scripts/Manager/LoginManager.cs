@@ -1,33 +1,32 @@
 using Firebase;
 using Firebase.Auth;
-using Firebase.Database;
 using Firebase.Extensions;
+using Firebase.Firestore;
 using Google;
-using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
 public class LoginManager : MonoBehaviour
 {
-    public static LoginManager Instance { get; private set; } // 싱글톤 인스턴스
+    public static LoginManager Instance { get; private set; }
 
     [Header("Google Sign-In Settings")]
     [SerializeField]
     private string webClientId =
-        "547845580475-6re3mh59m484pu68thvgpc896v6gtogi.apps.googleusercontent.com";
+        "547845580475-mp6sgdqiqc439t0jme0hsv03dfe8e8re.apps.googleusercontent.com";
 
     private FirebaseAuth auth;
-    private FirebaseDatabase database;
+    private FirebaseFirestore firestore;
     private GoogleSignInConfiguration configuration;
 
     public static FirebaseUser user { get; private set; }
 
-    private readonly TaskCompletionSource<bool> loginTasksCompleted = new TaskCompletionSource<bool>();
+    private readonly TaskCompletionSource<bool> loginTasksCompleted = new();
     public Task LoginTasksCompleted => loginTasksCompleted.Task;
 
     private void Awake()
     {
-        // 싱글톤 설정
         if (Instance == null)
         {
             Instance = this;
@@ -39,10 +38,8 @@ public class LoginManager : MonoBehaviour
             return;
         }
 
-        // Firebase 준비
         CheckFirebaseDependencies();
 
-        // Google 로그인 설정
         configuration = new GoogleSignInConfiguration
         {
             WebClientId = webClientId,
@@ -66,14 +63,8 @@ public class LoginManager : MonoBehaviour
                 Debug.Log("Firebase dependencies available.");
                 FirebaseApp app = FirebaseApp.DefaultInstance;
 
-                if (app.Options.DatabaseUrl == null)
-                {
-                    app.Options.DatabaseUrl = new Uri("https://cubetictactoe-default-rtdb.firebaseio.com");
-                }
-
                 auth = FirebaseAuth.DefaultInstance;
-                database = FirebaseDatabase.DefaultInstance;
-
+                firestore = FirebaseFirestore.DefaultInstance;
                 AutoLogin();
             }
             else
@@ -91,11 +82,18 @@ public class LoginManager : MonoBehaviour
             return;
         }
 
-        auth.SignInAnonymouslyAsync().ContinueWith(task =>
+        // 메인 스레드에서 후속 처리가 수행되도록 변경
+        auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
         {
             if (task.IsCompletedSuccessfully)
             {
                 user = auth.CurrentUser;
+                // 자동 로그인 경로에서도 Firestore 사용자 문서를 저장하도록 추가
+                if (user != null)
+                {
+                    SaveUserDocument(user.UserId);
+                }
+
                 OnLoginSuccess("자동 로그인 성공");
             }
             else
@@ -147,12 +145,18 @@ public class LoginManager : MonoBehaviour
     {
         var credential = GoogleAuthProvider.GetCredential(idToken, null);
 
-        auth.SignInWithCredentialAsync(credential).ContinueWith(task =>
+        // 메인 스레드에서 후속 처리 실행
+        auth.SignInWithCredentialAsync(credential).ContinueWithOnMainThread(task =>
         {
             if (task.IsCompletedSuccessfully)
             {
                 user = task.Result;
-                SaveUserIdToDatabase(user.UserId);
+
+                if (user != null)
+                {
+                    SaveUserDocument(user.UserId);
+                }
+
                 OnLoginSuccess("Google 로그인 성공");
             }
             else
@@ -166,12 +170,18 @@ public class LoginManager : MonoBehaviour
     #region 익명 로그인
     public void SignInAnonymously()
     {
-        auth.SignInAnonymouslyAsync().ContinueWith(task =>
+        // 메인 스레드에서 후속 처리 실행
+        auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
         {
             if (task.IsCompletedSuccessfully)
             {
+                // 사용하는 SDK 버전에 따라 Result 타입이 다를 수 있으므로 기존 코드를 유지
                 user = task.Result.User;
-                SaveUserIdToDatabase(user.UserId);
+                if (user != null)
+                {
+                    SaveUserDocument(user.UserId);
+                }
+
                 OnLoginSuccess("익명 로그인 성공");
             }
             else
@@ -183,21 +193,27 @@ public class LoginManager : MonoBehaviour
     #endregion
 
     #region 공통 유틸
-    private void SaveUserIdToDatabase(string userId)
+    private void SaveUserDocument(string userId)
     {
-        if (database == null)
+        if (firestore == null)
         {
-            Debug.LogError("Firebase Database not initialized.");
+            Debug.LogError("Firestore not initialized.");
             return;
         }
 
-        var userRef = database.GetReference($"users/{userId}");
-        userRef.Child("userId").SetValueAsync(userId).ContinueWith(task =>
+        var userDoc = firestore.Collection("users").Document(userId);
+        var data = new Dictionary<string, object>
         {
-            if (task.IsCompletedSuccessfully)
-                Debug.Log($"User ID {userId} 저장 성공");
+            { "userId", userId },
+            { "createdAt", FieldValue.ServerTimestamp }
+        };
+
+        userDoc.SetAsync(data, SetOptions.MergeAll).ContinueWithOnMainThread(t =>
+        {
+            if (t.IsCompletedSuccessfully)
+                Debug.Log($"User document {userId} 저장/병합 성공");
             else
-                Debug.LogError($"User ID {userId} 저장 실패: {task.Exception?.Message}");
+                Debug.LogError($"User document 저장 실패: {t.Exception?.Message}");
         });
     }
 
@@ -219,7 +235,6 @@ public class LoginManager : MonoBehaviour
         if (user.IsAnonymous)
         {
             Debug.Log("Disconnecting Anonymous User.");
-            FirebaseDatabase.DefaultInstance.GoOffline();
         }
         else
         {
