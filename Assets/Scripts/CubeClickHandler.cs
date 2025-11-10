@@ -14,14 +14,15 @@ public class CubeClickHandler : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (Touchscreen.current != null)
-        {
-            var touch0 = Touchscreen.current.touches[0];
-            var touch1 = Touchscreen.current.touches[1];
-            if (touch0.isInProgress && !touch1.isInProgress)
-            {
-                GameManager.Instance.tictactoe.OnCubeClicked(x, y, z, gameObject);
-            }
-        }
+        GameManager.Instance.tictactoe.OnCubeClicked(x, y, z, gameObject);
+        //if (Touchscreen.current != null)
+        //{
+        //    var touch0 = Touchscreen.current.touches[0];
+        //    var touch1 = Touchscreen.current.touches[1];
+        //    if (touch0.isInProgress && !touch1.isInProgress)
+        //    {
+        //        GameManager.Instance.tictactoe.OnCubeClicked(x, y, z, gameObject);
+        //    }
+        //}
     }
 }

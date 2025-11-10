@@ -1,6 +1,7 @@
 using Photon.Pun;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TicTacToeNxN : MonoBehaviourPunCallbacks
@@ -10,7 +11,7 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
     [SerializeField] private CameraMoveAndroid CameraMoveAndroid;
 
     public GameObject[,,] cubes;
-    public int[,,] board;                       // 0: empty, 1: O, 2: X
+    public int[,,] board;                       // 0: empty, 1: O, 2: X (보드 값은 기존 그대로 유지)
     public bool isOTurn;
     public bool gameOver = false;
     public bool isExpanded = false;
@@ -26,15 +27,19 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
     // 캐싱/애니메이션용 데이터
     private Vector3[,,] originalPositions;
     private Vector3[,,] expandedPositions;
-    private Vector3[,,] fromPositions;          // 애니메이션 시작 시 위치 스냅샷
-    private Cube[,,] cubeComps;                 // Cube 컴포넌트 캐시
+    private Vector3[,,] fromPositions;
+    private Cube[,,] cubeComps;
     private const float spacing = 1.1f;
     private const float expandFactor = 2.5f;
     private const float moveDuration = 0.5f;
 
+    // --- 승리 라인 계산 ---
+    private List<Vector3Int[]> allLines;
+    private List<int>[,,] cellToLines;
+    private int[] lineSums;                     // 각 라인별 합: O=+1, X=-1 → N이면 O 승, -N이면 X 승
+
     private void Awake()
     {
-        // GameManager에서 현재 보드 크기(N) 가져오기
         N = GameManager.Instance.CurrentVersion;
 
         cubes = new GameObject[N, N, N];
@@ -47,7 +52,6 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
 
         GameManager.Instance.tictactoe = this;
 
-        // 큐브 생성 & 기본 정보 셋업
         int count = 0;
         for (int x = 0; x < N; x++)
         {
@@ -61,9 +65,8 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
                     cubes[x, y, z] = cube;
                     originalPositions[x, y, z] = pos;
                     centerPosition += pos;
-                    cubeComps[x, y, z] = cube.GetComponent<Cube>(); // 매번 GetComponent 방지
+                    cubeComps[x, y, z] = cube.GetComponent<Cube>();
 
-                    // 클릭 핸들러 부착
                     cube.AddComponent<CubeClickHandler>().Init(x, y, z);
 
                     count++;
@@ -72,7 +75,6 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
         }
         if (count > 0) centerPosition /= count;
 
-        // 확장 위치 미리 계산
         for (int x = 0; x < N; x++)
         {
             for (int y = 0; y < N; y++)
@@ -84,14 +86,13 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
                 }
             }
         }
+
+        PrecomputeLines();
     }
 
     private void Start()
     {
-        // 초기 턴
         isOTurn = GameManager.Instance.isOTurnFirst;
-
-        // 모드 파악
         isAI = GameManager.Instance.IsAIMode();
 
         if (isAI)
@@ -111,10 +112,70 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
         gameUI.StartTurnTimer();
     }
 
+    private void PrecomputeLines()
+    {
+        allLines = new List<Vector3Int[]>();
+        cellToLines = new List<int>[N, N, N];
+
+        for (int x = 0; x < N; x++)
+            for (int y = 0; y < N; y++)
+                for (int z = 0; z < N; z++)
+                    cellToLines[x, y, z] = new List<int>();
+
+        // 축 방향
+        for (int i = 0; i < N; i++)
+        {
+            for (int j = 0; j < N; j++)
+            {
+                AddLine(k => new Vector3Int(k, i, j));
+                AddLine(k => new Vector3Int(i, k, j));
+                AddLine(k => new Vector3Int(i, j, k));
+            }
+        }
+
+        // 각 평면 대각선
+        for (int i = 0; i < N; i++)
+        {
+            // XY (z=i)
+            AddLine(k => new Vector3Int(k, k, i));
+            AddLine(k => new Vector3Int(k, N - 1 - k, i));
+            // XZ (y=i)
+            AddLine(k => new Vector3Int(k, i, k));
+            AddLine(k => new Vector3Int(k, i, N - 1 - k));
+            // YZ (x=i)
+            AddLine(k => new Vector3Int(i, k, k));
+            AddLine(k => new Vector3Int(i, k, N - 1 - k));
+        }
+
+        // 3D 공간 대각선
+        AddLine(k => new Vector3Int(k, k, k));
+        AddLine(k => new Vector3Int(k, k, N - 1 - k));
+        AddLine(k => new Vector3Int(k, N - 1 - k, k));
+        AddLine(k => new Vector3Int(k, N - 1 - k, N - 1 - k));
+
+        // 단일 합 배열 사용
+        lineSums = new int[allLines.Count];
+    }
+
+    private void AddLine(Func<int, Vector3Int> generator)
+    {
+        Vector3Int[] cells = new Vector3Int[N];
+        for (int k = 0; k < N; k++)
+            cells[k] = generator(k);
+
+        int lineIndex = allLines.Count;
+        allLines.Add(cells);
+
+        for (int k = 0; k < N; k++)
+        {
+            Vector3Int c = cells[k];
+            cellToLines[c.x, c.y, c.z].Add(lineIndex);
+        }
+    }
+
     public void MoveCube()
     {
         if (isMoving) return;
-
         isExpanded = !isExpanded;
         StartCoroutine(MoveCubes());
     }
@@ -123,17 +184,10 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
     {
         isMoving = true;
 
-        // 시작 위치 스냅샷
         for (int x = 0; x < N; x++)
-        {
             for (int y = 0; y < N; y++)
-            {
                 for (int z = 0; z < N; z++)
-                {
                     fromPositions[x, y, z] = cubes[x, y, z].transform.position;
-                }
-            }
-        }
 
         float elapsed = 0f;
         while (elapsed < moveDuration)
@@ -142,19 +196,13 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
             float t = Mathf.SmoothStep(0f, 1f, elapsed / moveDuration);
 
             for (int x = 0; x < N; x++)
-            {
                 for (int y = 0; y < N; y++)
-                {
                     for (int z = 0; z < N; z++)
                     {
-                        Vector3 target = isExpanded ? expandedPositions[x, y, z]
-                                                    : originalPositions[x, y, z];
+                        Vector3 target = isExpanded ? expandedPositions[x, y, z] : originalPositions[x, y, z];
                         cubes[x, y, z].transform.position =
                             Vector3.LerpUnclamped(fromPositions[x, y, z], target, t);
                     }
-                }
-            }
-
             yield return null;
         }
 
@@ -169,63 +217,63 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
 
         if (isAI)
         {
-            // AI 모드: 바로 로컬에서 적용
             ApplyMoveLocal(x, y, z, isOTurn);
-            int player = isOTurn ? 1 : 2;
+            int playerVal = isOTurn ? 1 : -1; // O = +1, X = -1
 
-            int completedLines = CheckCompletedLines(player);
-            if (completedLines == 1)
+            if (ProcessMoveAndCheckWin(x, y, z, playerVal))
             {
                 gameOver = true;
                 gameUI.GameResult();
             }
             else
             {
-                // 턴 교체
                 isOTurn = !isOTurn;
-                if (!isOTurn) OnAITurnStarted?.Invoke(); // AI 차례 이벤트 호출
                 gameUI.StartTurnTimer();
+                if (!isOTurn) OnAITurnStarted?.Invoke();
+                
             }
         }
         else
         {
-            // 멀티플레이 모드
             if ((isOTurn && !isPlayerO) || (!isOTurn && isPlayerO))
             {
                 gameUI.UpdateInfoText("Not your turn");
                 return;
             }
 
-            // 모든 클라이언트에 턴 전달
             photonView.RPC(nameof(BroadcastMove), RpcTarget.All, x, y, z, isOTurn);
 
-            int player = isOTurn ? 1 : 2;
-            int completedLines = CheckCompletedLines(player);
-
-            if (completedLines == 1)
+            int playerVal = isOTurn ? 1 : -1;
+            if (ProcessMoveAndCheckWin(x, y, z, playerVal))
                 photonView.RPC(nameof(HandleGameOver), RpcTarget.All);
             else
                 photonView.RPC(nameof(ToggleTurn), RpcTarget.All);
         }
     }
 
-    // --- 공통 로컬 적용(시각/보드) ---
+    // 단일 라인 합을 활용한 승리 판정
+    private bool ProcessMoveAndCheckWin(int x, int y, int z, int playerVal)
+    {
+        foreach (int lineIdx in cellToLines[x, y, z])
+        {
+            lineSums[lineIdx] += playerVal;
+            if (lineSums[lineIdx] == N || lineSums[lineIdx] == -N)
+                return true;
+        }
+        return false;
+    }
+
     private void ApplyMoveLocal(int x, int y, int z, bool turnIsO)
     {
-        board[x, y, z] = turnIsO ? 1 : 2;
+        board[x, y, z] = turnIsO ? 1 : 2; // 기존 보드 값 유지 (AI 코드 영향 최소화)
 
         Cube c = cubeComps[x, y, z];
         c.cubeMesh.enabled = false;
 
-        //필요한 것만 On
         if (turnIsO)
-        {
             c.oObj.gameObject.SetActive(true);
-        }
         else
-        {
             c.xObj.gameObject.SetActive(true);
-        }
     }
 
     [PunRPC]
@@ -247,55 +295,24 @@ public class TicTacToeNxN : MonoBehaviourPunCallbacks
     {
         ApplyMoveLocal(x, y, z, wasOTurn);
     }
-
-    // --- 승리 라인 체크 ---
-    public int CheckCompletedLines(int player)
+    public bool HasCompletedLine(int[,,] boardState, int player)
     {
-        int lines = 0;
-
-        // 축 방향
-        for (int i = 0; i < N; i++)
+        // 기존 AI용: player는 1(O) 또는 2(X)로 가정 (라인 합과 무관)
+        for (int i = 0; i < allLines.Count; i++)
         {
-            for (int j = 0; j < N; j++)
+            Vector3Int[] line = allLines[i];
+            bool complete = true;
+            for (int k = 0; k < line.Length; k++)
             {
-                if (IsLineCompleted(player, 0, i, j, 1, 0, 0)) lines++;
-                if (IsLineCompleted(player, i, 0, j, 0, 1, 0)) lines++;
-                if (IsLineCompleted(player, i, j, 0, 0, 0, 1)) lines++;
+                Vector3Int c = line[k];
+                if (boardState[c.x, c.y, c.z] != player)
+                {
+                    complete = false;
+                    break;
+                }
             }
+            if (complete) return true;
         }
-
-        // 각 평면의 2D 대각
-        for (int i = 0; i < N; i++)
-        {
-            if (IsLineCompleted(player, 0, 0, i, 1, 1, 0)) lines++;
-            if (IsLineCompleted(player, 0, N - 1, i, 1, -1, 0)) lines++;
-
-            if (IsLineCompleted(player, 0, i, 0, 1, 0, 1)) lines++;
-            if (IsLineCompleted(player, 0, i, N - 1, 1, 0, -1)) lines++;
-
-            if (IsLineCompleted(player, i, 0, 0, 0, 1, 1)) lines++;
-            if (IsLineCompleted(player, i, 0, N - 1, 0, 1, -1)) lines++;
-        }
-
-        // 3D 대각
-        if (IsLineCompleted(player, 0, 0, 0, 1, 1, 1)) lines++;
-        if (IsLineCompleted(player, 0, 0, N - 1, 1, 1, -1)) lines++;
-        if (IsLineCompleted(player, 0, N - 1, 0, 1, -1, 1)) lines++;
-        if (IsLineCompleted(player, 0, N - 1, N - 1, 1, -1, -1)) lines++;
-
-        return lines;
-    }
-
-    // 특정 방향으로 라인이 완성되었는지 체크
-    private bool IsLineCompleted(int player, int startX, int startY, int startZ, int stepX, int stepY, int stepZ)
-    {
-        for (int k = 0; k < N; k++)
-        {
-            int x = startX + stepX * k;
-            int y = startY + stepY * k;
-            int z = startZ + stepZ * k;
-            if (board[x, y, z] != player) return false;
-        }
-        return true;
+        return false;
     }
 }
