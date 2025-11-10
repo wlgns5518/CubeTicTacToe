@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections.Generic;
 
 public class HardAIStrategy : IAIStrategy
 {
@@ -42,8 +42,9 @@ public class HardAIStrategy : IAIStrategy
 
     private int Minimax(int[,,] board, TicTacToeNxN game, int n, int depth, bool isMaximizing, int self, int opponent, int alpha, int beta)
     {
-        if (game.CheckCompletedLines(self) > 0) return 1000 + depth;
-        if (game.CheckCompletedLines(opponent) > 0) return -1000 - depth;
+        // 새 방식: 시뮬레이션 board 기반 검사
+        if (game.HasCompletedLine(board, self)) return 1000 + depth;
+        if (game.HasCompletedLine(board, opponent)) return -1000 - depth;
         if (IsBoardFull(board, n) || depth == 0) return Evaluate(board, game, n, self, opponent);
 
         int bestValue = isMaximizing ? int.MinValue : int.MaxValue;
@@ -65,7 +66,7 @@ public class HardAIStrategy : IAIStrategy
                 beta = Mathf.Min(beta, eval);
             }
 
-            if (beta <= alpha) break; // 알파베타 가지치기
+            if (beta <= alpha) break;
         }
 
         return bestValue;
@@ -73,7 +74,6 @@ public class HardAIStrategy : IAIStrategy
 
     private IEnumerable<Vector3> GetCandidateMoves(int[,,] board, int n)
     {
-        // 후보칸: 빈 칸만
         for (int x = 0; x < n; x++)
             for (int y = 0; y < n; y++)
                 for (int z = 0; z < n; z++)
@@ -93,19 +93,20 @@ public class HardAIStrategy : IAIStrategy
     private int Evaluate(int[,,] board, TicTacToeNxN game, int n, int self, int opponent)
     {
         int score = 0;
-        // 단순 휴리스틱: 내 직전 완성 +10, 상대 직전 완성 -10
+        // 휴리스틱: 한 수로 완성 가능하면 +10 / 상대가 완성 가능하면 -10
         for (int x = 0; x < n; x++)
             for (int y = 0; y < n; y++)
                 for (int z = 0; z < n; z++)
                 {
-                    if (board[x, y, z] == 0)
-                    {
-                        board[x, y, z] = self;
-                        if (game.CheckCompletedLines(self) > 0) score += 10;
-                        board[x, y, z] = opponent;
-                        if (game.CheckCompletedLines(opponent) > 0) score -= 10;
-                        board[x, y, z] = 0;
-                    }
+                    if (board[x, y, z] != 0) continue;
+
+                    board[x, y, z] = self;
+                    if (game.HasCompletedLine(board, self)) score += 10;
+
+                    board[x, y, z] = opponent;
+                    if (game.HasCompletedLine(board, opponent)) score -= 10;
+
+                    board[x, y, z] = 0;
                 }
         return score;
     }
@@ -118,7 +119,7 @@ public class HardAIStrategy : IAIStrategy
                 {
                     if (board[x, y, z] != 0) continue;
                     board[x, y, z] = player;
-                    if (game.CheckCompletedLines(player) > 0)
+                    if (game.HasCompletedLine(board, player))
                     {
                         board[x, y, z] = 0;
                         return new Vector3(x, y, z);

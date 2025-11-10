@@ -1,5 +1,4 @@
 using UnityEngine;
-
 public class NormalAIStrategy : IAIStrategy
 {
     public Vector3? GetMove(int[,,] board, TicTacToeNxN game, int n, int self, int opponent)
@@ -27,7 +26,8 @@ public class NormalAIStrategy : IAIStrategy
                     if (board[x, y, z] != 0) continue;
 
                     board[x, y, z] = player;
-                    bool isWinningMove = game.CheckCompletedLines(player) > 0;
+                    // 변경: 실제 보드가 아닌 시뮬레이션 보드 상태로 승리 라인 검사
+                    bool isWinningMove = game.HasCompletedLine(board, player);
                     board[x, y, z] = 0;
 
                     if (isWinningMove)

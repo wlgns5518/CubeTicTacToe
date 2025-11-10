@@ -52,7 +52,7 @@ public class GameUI : MonoBehaviour
     {
         if (timerText != null)
         {
-            timerText.text = $"Time : {Mathf.Ceil(remainingTime)}s";
+            timerText.text = $"Time : {remainingTime:F1}s";
         }
     }
     public void GameResult()
