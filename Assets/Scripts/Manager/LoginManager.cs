@@ -2,7 +2,6 @@ using Firebase;
 using Firebase.Auth;
 using Firebase.Extensions;
 using Firebase.Firestore;
-using Google;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -11,14 +10,8 @@ public class LoginManager : MonoBehaviour
 {
     public static LoginManager Instance { get; private set; }
 
-    [Header("Google Sign-In Settings")]
-    [SerializeField]
-    private string webClientId =
-        "547845580475-mp6sgdqiqc439t0jme0hsv03dfe8e8re.apps.googleusercontent.com";
-
     private FirebaseAuth auth;
     private FirebaseFirestore firestore;
-    private GoogleSignInConfiguration configuration;
 
     public static FirebaseUser user { get; private set; }
 
@@ -39,13 +32,6 @@ public class LoginManager : MonoBehaviour
         }
 
         CheckFirebaseDependencies();
-
-        configuration = new GoogleSignInConfiguration
-        {
-            WebClientId = webClientId,
-            RequestEmail = true,
-            RequestIdToken = true
-        };
     }
 
     private void Start()
@@ -65,7 +51,7 @@ public class LoginManager : MonoBehaviour
 
                 auth = FirebaseAuth.DefaultInstance;
                 firestore = FirebaseFirestore.DefaultInstance;
-                AutoLogin();
+                TryAutoLogin();
             }
             else
             {
@@ -74,104 +60,84 @@ public class LoginManager : MonoBehaviour
         });
     }
 
-    private void AutoLogin()
+    private void TryAutoLogin()
     {
-        if (!PlayerPrefs.HasKey("UserId"))
+        // Firebase Auth는 로그인 세션을 디바이스에 자동 보관합니다.
+        // 앱 재시작 시 CurrentUser가 비어있지 않으면 이전 로그인 상태가 그대로 복원됩니다.
+        if (auth.CurrentUser != null)
         {
-            Debug.Log("자동 로그인 실패: 저장된 정보 없음.");
-            return;
-        }
-
-        // 메인 스레드에서 후속 처리가 수행되도록 변경
-        auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
-        {
-            if (task.IsCompletedSuccessfully)
-            {
-                user = auth.CurrentUser;
-                // 자동 로그인 경로에서도 Firestore 사용자 문서를 저장하도록 추가
-                if (user != null)
-                {
-                    SaveUserDocument(user.UserId);
-                }
-            }
-            else
-            {
-                Debug.LogError("자동 로그인 실패: " + task.Exception?.Message);
-            }
-        });
-    }
-    #endregion
-
-    #region Google 로그인
-    public void SignInWithGoogle() => SignIn(false);
-    public void OnSignInSilently() => SignIn(true);
-    public void SignOutFromGoogle() => GoogleSignIn.DefaultInstance.SignOut();
-
-    private void SignIn(bool silent)
-    {
-        GoogleSignIn.Configuration = configuration;
-        GoogleSignIn.Configuration.UseGameSignIn = false;
-        GoogleSignIn.Configuration.RequestIdToken = true;
-
-        Debug.Log(silent ? "Calling SignIn Silently" : "Calling SignIn");
-
-        var signInTask = silent
-            ? GoogleSignIn.DefaultInstance.SignInSilently()
-            : GoogleSignIn.DefaultInstance.SignIn();
-
-        signInTask.ContinueWith(OnAuthenticationFinished);
-    }
-
-    private void OnAuthenticationFinished(Task<GoogleSignInUser> task)
-    {
-        if (task.IsFaulted)
-        {
-            foreach (var e in task.Exception.InnerExceptions)
-                Debug.LogError("Google Sign-In Error: " + e.Message);
-        }
-        else if (task.IsCanceled)
-        {
-            Debug.LogWarning("Google Sign-In Canceled");
+            user = auth.CurrentUser;
+            Debug.Log($"자동 로그인 성공: {user.UserId} (Anonymous: {user.IsAnonymous})");
+            SaveUserDocument(user.UserId);
         }
         else
         {
-            SignInWithGoogleOnFirebase(task.Result.IdToken);
+            Debug.Log("자동 로그인 실패: 저장된 세션 없음.");
         }
     }
+    #endregion
 
-    private void SignInWithGoogleOnFirebase(string idToken)
+    #region Google 로그인 (Firebase Federated OAuth)
+    public void SignInWithGoogle()
     {
-        var credential = GoogleAuthProvider.GetCredential(idToken, null);
-
-        // 메인 스레드에서 후속 처리 실행
-        auth.SignInWithCredentialAsync(credential).ContinueWithOnMainThread(task =>
+        if (auth == null)
         {
-            if (task.IsCompletedSuccessfully)
-            {
-                user = task.Result;
+            Debug.LogError("Firebase Auth not initialized.");
+            return;
+        }
 
-                if (user != null)
-                {
-                    SaveUserDocument(user.UserId);
-                }
-            }
-            else
+        var providerData = new FederatedOAuthProviderData
+        {
+            ProviderId = GoogleAuthProvider.ProviderId,
+            Scopes = new List<string> { "email", "profile" }
+        };
+
+        var provider = new FederatedOAuthProvider();
+        provider.SetProviderData(providerData);
+
+        Debug.Log("Calling Firebase SignInWithProvider (Google)");
+
+        auth.SignInWithProviderAsync(provider).ContinueWithOnMainThread(task =>
+        {
+            if (task.IsFaulted)
             {
-                Debug.LogError("Google Firebase 로그인 실패: " + task.Exception?.Message);
+                foreach (var e in task.Exception.InnerExceptions)
+                    Debug.LogError("Google Sign-In Error: " + e.Message);
+                return;
+            }
+
+            if (task.IsCanceled)
+            {
+                Debug.LogWarning("Google Sign-In Canceled");
+                return;
+            }
+
+            user = task.Result.User;
+            if (user != null)
+            {
+                SaveUserDocument(user.UserId);
             }
         });
+    }
+
+    public void SignOutFromGoogle()
+    {
+        if (auth != null)
+        {
+            auth.SignOut();
+            user = null;
+            Debug.Log("로그아웃 완료");
+        }
     }
     #endregion
 
     #region 익명 로그인
     public void SignInAnonymously()
     {
-        // 메인 스레드에서 후속 처리 실행
         auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
         {
             if (task.IsCompletedSuccessfully)
             {
-                // 사용하는 SDK 버전에 따라 Result 타입이 다를 수 있으므로 기존 코드를 유지
                 user = task.Result.User;
                 if (user != null)
                 {
@@ -228,15 +194,12 @@ public class LoginManager : MonoBehaviour
             return;
         }
 
-        if (user.IsAnonymous)
-        {
-            Debug.Log("Disconnecting Anonymous User.");
-        }
-        else
-        {
-            Debug.Log("Disconnecting Google User.");
-            GoogleSignIn.DefaultInstance.Disconnect();
-        }
+        Debug.Log(user.IsAnonymous
+            ? "Disconnecting Anonymous User."
+            : "Disconnecting Google User.");
+
+        auth.SignOut();
+        user = null;
     }
     #endregion
 }
