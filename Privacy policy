@@ -1,0 +1,185 @@
+# Privacy Policy for CubeTicTacToe
+
+**Last updated: April 28, 2026**
+
+This Privacy Policy explains how CubeTicTacToe ("the App", "we", "us") collects, uses, and protects your information when you use our mobile game.
+
+## 1. Information We Collect
+
+To enable online multiplayer and leaderboards, the App collects the following information through Firebase services provided by Google:
+
+### Account Information (via Firebase Authentication)
+- Email address
+- Unique user ID (Firebase UID)
+- Display name (nickname) you choose
+- Profile picture (only if you sign in with Google)
+
+### Gameplay Data (via Firebase Realtime Database / Firestore)
+- Match results, scores, and ranking information
+- Game session data required for online multiplayer
+- Nickname displayed to other players on leaderboards
+
+### Technical Data (via Firebase, optional)
+- Crash reports (Firebase Crashlytics) to improve app stability
+- Basic device information for troubleshooting
+
+We do **not** collect:
+- Your real name, phone number, or address
+- Your location
+- Your contacts, photos, or files
+- Any payment information (no in-app purchases)
+- Advertising identifiers (no advertising in this app)
+
+## 2. How We Use Your Information
+
+We use the collected information solely to:
+- Authenticate your account and enable login
+- Match you with other players for online multiplayer games
+- Display your rank and nickname on the leaderboard
+- Maintain and improve app stability through crash reports
+
+We do **not** sell, rent, or share your personal information with third parties for marketing purposes.
+
+## 3. Data Storage and Security
+
+- All data is stored on Google Firebase servers, which use industry-standard encryption.
+- Data is transmitted over HTTPS (encrypted in transit).
+- Your password is never stored by us; Firebase handles authentication securely.
+
+## 4. Third-Party Services
+
+The App uses the following Google Firebase services:
+- **Firebase Authentication** — for account login
+- **Firebase Realtime Database / Firestore** — for multiplayer and leaderboards
+- **Firebase Crashlytics** (if used) — for crash reporting
+
+For information on how Google handles data, see Google's Privacy Policy:
+https://policies.google.com/privacy
+
+## 5. Your Rights and Choices
+
+You have the right to:
+- **Access** the data we hold about you
+- **Delete** your account and all associated data
+- **Correct** inaccurate information (e.g., change your nickname)
+
+### How to Delete Your Account and Data
+You can delete your account at any time:
+1. **In-app**: Go to Settings → Account → Delete Account
+2. **Or by email**: Send a deletion request to the email below
+
+When you delete your account, all your personal data (email, UID, nickname, match history, leaderboard records) will be permanently removed within 30 days.
+
+## 6. Children's Privacy
+
+The App is intended for users aged 13 and older. We do not knowingly collect personal information from children under 13. If you believe a child under 13 has provided us with personal information, please contact us so we can remove it.
+
+## 7. International Data Transfers
+
+Firebase servers may be located outside your country. By using the App, you consent to the transfer of your information to these servers, which are protected by Google's security standards.
+
+## 8. Changes to This Policy
+
+We may update this Privacy Policy from time to time. Significant changes will be announced within the App or on this page. The "Last updated" date will reflect the most recent revision.
+
+## 9. Contact
+
+If you have any questions, requests, or complaints about this Privacy Policy, please contact:
+
+**Developer**: wlgns5518
+**GitHub**: https://github.com/wlgns5518/CubeTicTacToe
+**Email**: [당신의 이메일 주소를 입력하세요]
+
+---
+
+# 개인정보처리방침 (한국어)
+
+**최종 업데이트: 2026년 4월 28일**
+
+본 개인정보처리방침은 CubeTicTacToe("본 앱")가 사용자의 정보를 어떻게 수집, 이용, 보호하는지 설명합니다.
+
+## 1. 수집하는 정보
+
+온라인 멀티플레이 및 순위표 기능을 제공하기 위해 본 앱은 Google Firebase 서비스를 통해 다음 정보를 수집합니다:
+
+### 계정 정보 (Firebase Authentication)
+- 이메일 주소
+- 고유 사용자 ID (Firebase UID)
+- 사용자가 설정한 닉네임
+- 프로필 사진 (Google 로그인 사용 시에만)
+
+### 게임 플레이 데이터 (Firebase Realtime Database / Firestore)
+- 경기 결과, 점수, 순위 정보
+- 온라인 멀티플레이에 필요한 게임 세션 데이터
+- 순위표에서 다른 플레이어에게 표시되는 닉네임
+
+### 기술적 데이터 (Firebase, 선택)
+- 앱 안정성 개선을 위한 크래시 리포트 (Firebase Crashlytics)
+- 문제 해결을 위한 기본 기기 정보
+
+본 앱은 다음 정보를 **수집하지 않습니다**:
+- 실명, 전화번호, 주소
+- 위치 정보
+- 연락처, 사진, 파일
+- 결제 정보 (인앱결제 없음)
+- 광고 식별자 (광고 없음)
+
+## 2. 정보 이용 목적
+
+수집한 정보는 다음 목적으로만 사용됩니다:
+- 계정 인증 및 로그인
+- 온라인 멀티플레이 매칭
+- 순위표 표시
+- 크래시 리포트를 통한 앱 안정성 개선
+
+수집한 개인정보를 마케팅 목적으로 제3자에게 판매, 임대, 공유하지 **않습니다**.
+
+## 3. 데이터 저장 및 보안
+
+- 모든 데이터는 업계 표준 암호화를 사용하는 Google Firebase 서버에 저장됩니다.
+- 데이터는 HTTPS를 통해 전송됩니다 (전송 중 암호화).
+- 비밀번호는 저장하지 않으며, Firebase가 안전하게 처리합니다.
+
+## 4. 제3자 서비스
+
+본 앱은 다음 Google Firebase 서비스를 사용합니다:
+- **Firebase Authentication** — 계정 로그인
+- **Firebase Realtime Database / Firestore** — 멀티플레이 및 순위표
+- **Firebase Crashlytics** (사용 시) — 크래시 리포트
+
+Google의 데이터 처리 방침은 다음을 참고하세요:
+https://policies.google.com/privacy
+
+## 5. 사용자의 권리
+
+사용자는 다음 권리를 가집니다:
+- 보유 데이터에 대한 **열람**
+- 계정 및 모든 관련 데이터의 **삭제**
+- 부정확한 정보의 **수정** (예: 닉네임 변경)
+
+### 계정 및 데이터 삭제 방법
+언제든지 계정을 삭제할 수 있습니다:
+1. **앱 내**: 설정 → 계정 → 계정 삭제
+2. **이메일**: 아래 이메일로 삭제 요청 발송
+
+계정을 삭제하면 모든 개인정보(이메일, UID, 닉네임, 경기 기록, 순위 기록)가 30일 이내에 영구적으로 삭제됩니다.
+
+## 6. 아동 개인정보 보호
+
+본 앱은 만 13세 이상 사용자를 대상으로 합니다. 13세 미만 아동의 개인정보는 의도적으로 수집하지 않으며, 13세 미만 아동이 정보를 제공한 사실이 확인되면 즉시 삭제 조치합니다.
+
+## 7. 국외 이전
+
+Firebase 서버는 사용자 거주 국가 외부에 위치할 수 있습니다. 본 앱을 사용함으로써 사용자는 Google의 보안 표준에 따라 보호되는 서버로 정보가 이전되는 것에 동의합니다.
+
+## 8. 정책 변경
+
+본 개인정보처리방침은 변경될 수 있습니다. 중요한 변경사항은 앱 내 또는 본 페이지에 공지되며, "최종 업데이트" 날짜에 반영됩니다.
+
+## 9. 문의처
+
+본 개인정보처리방침에 관한 문의, 요청, 불만은 아래로 연락주세요:
+
+**개발자**: wlgns5518
+**GitHub**: https://github.com/wlgns5518/CubeTicTacToe
+**이메일**: [당신의 이메일 주소를 입력하세요]
