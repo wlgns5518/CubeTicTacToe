@@ -10,15 +10,19 @@ public class LoadingUI : MonoBehaviour
 
     private async void Start()
     {
-        // LoginManager와 GameManager의 작업 완료를 기다림
+        Debug.Log("로딩 시작");
+
         Task loginTask = LoginManager.Instance.LoginTasksCompleted;
         Task gameTask = GameManager.Instance.GameTasksCompleted;
 
-        // 두 작업이 완료될 때까지 대기
         await Task.WhenAll(loginTask, gameTask);
-        // 나머지 10%를 채움
+
+        Debug.Log("모든 Task 완료됨");
+
         isTasksCompleted = true;
-        PlayerPrefs.SetString("UserId",LoginManager.user.UserId);
+
+        if (LoginManager.user != null)
+            PlayerPrefs.SetString("UserId", LoginManager.user.UserId);
     }
 
     private void Update()

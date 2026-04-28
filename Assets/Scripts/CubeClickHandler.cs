@@ -12,16 +12,27 @@ public class CubeClickHandler : MonoBehaviour
         this.z = z;
     }
 
-    void OnMouseDown()
+    void Update()
     {
-        //컴퓨터용
-        //GameManager.Instance.tictactoe.OnCubeClicked(x, y, z, gameObject);
-        //모바일용
-        if (Touchscreen.current != null)
+        // 마우스 클릭 또는 터치 시작 감지
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
-            var touch0 = Touchscreen.current.touches[0];
-            var touch1 = Touchscreen.current.touches[1];
-            if (touch0.isInProgress && !touch1.isInProgress)
+            TryClick(Mouse.current.position.ReadValue());
+        }
+        else if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
+        {
+            TryClick(Touchscreen.current.primaryTouch.position.ReadValue());
+        }
+    }
+
+    void TryClick(Vector2 screenPos)
+    {
+        Ray ray = Camera.main.ScreenPointToRay(screenPos);
+
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            // 자기 자신이 맞았을 때만 실행
+            if (hit.collider.gameObject == gameObject)
             {
                 GameManager.Instance.tictactoe.OnCubeClicked(x, y, z, gameObject);
             }
