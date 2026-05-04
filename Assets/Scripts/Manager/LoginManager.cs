@@ -15,6 +15,8 @@ public class LoginManager : MonoBehaviour
 
     public static FirebaseUser user { get; private set; }
 
+    [SerializeField] private LoginUI loginUI; // Inspector에서 LoginUI 연결
+
     private readonly TaskCompletionSource<bool> loginTasksCompleted = new();
     public Task LoginTasksCompleted => loginTasksCompleted.Task;
 
@@ -62,8 +64,6 @@ public class LoginManager : MonoBehaviour
 
     private void TryAutoLogin()
     {
-        // Firebase Auth는 로그인 세션을 디바이스에 자동 보관합니다.
-        // 앱 재시작 시 CurrentUser가 비어있지 않으면 이전 로그인 상태가 그대로 복원됩니다.
         if (auth.CurrentUser != null)
         {
             user = auth.CurrentUser;
@@ -72,7 +72,8 @@ public class LoginManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("자동 로그인 실패: 저장된 세션 없음.");
+            Debug.Log("자동 로그인 실패: 저장된 세션 없음. 로그인 창을 엽니다.");
+            loginUI.Login();
         }
     }
     #endregion

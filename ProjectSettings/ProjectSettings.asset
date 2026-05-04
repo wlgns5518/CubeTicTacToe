@@ -168,7 +168,7 @@ PlayerSettings:
   androidMaxAspectRatio: 2.4
   androidMinAspectRatio: 1
   applicationIdentifier:
-    Android: com.artriel.cubetictactoe
+    Android: io.github.wlgns5518.cubetictactoe
     Standalone: com.Unity-Technologies.com.unity.template.urp-blank
     iPhone: com.artriel.cubetictactoe
   buildNumber:
