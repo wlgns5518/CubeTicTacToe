@@ -6,7 +6,7 @@
   <string name="project_id" translatable="false">cubetictactoe</string>
   <string name="google_api_key" translatable="false">AIzaSyBUbIlID37_2v9xLxwMyRHn6Jw8XL23RVM</string>
   <string name="google_crash_reporting_api_key" translatable="false">AIzaSyBUbIlID37_2v9xLxwMyRHn6Jw8XL23RVM</string>
-  <string name="google_app_id" translatable="false">1:547845580475:android:94257f8a5020fb8aeb6b9e</string>
-  <string name="default_android_client_id" translatable="false">547845580475-6re3mh59m484pu68thvgpc896v6gtogi.apps.googleusercontent.com</string>
+  <string name="google_app_id" translatable="false">1:547845580475:android:fc71788f566a3fd6eb6b9e</string>
+  <string name="default_android_client_id" translatable="false">547845580475-air8ifn4n4okl1a22rnn4u07ib808r13.apps.googleusercontent.com</string>
   <string name="default_web_client_id" translatable="false">547845580475-mp6sgdqiqc439t0jme0hsv03dfe8e8re.apps.googleusercontent.com</string>
 </resources>
